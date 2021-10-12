@@ -55,8 +55,8 @@ async def create_match(winners, losers, guild_id, ctx):
         user_discriminator = (user["name"].split("#"))[1]
         user_mention = discord.utils.get(bot.get_all_members(), name=user_name, discriminator=user_discriminator)
         msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
-            "rank"] + "\n" + "Rating : " + str(user["rating"]) + "`\n"
-
+            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
+            round(user["rating"])) + "`\n"
     await ctx.send(msg)
 
 
@@ -105,7 +105,6 @@ async def match(ctx):
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
-        print(team_1_players, team_2_players)
         if user.permissions_in(ctx.channel).administrator:
             if str(reaction.emoji) == "⬅":
                 await message.delete()
@@ -113,7 +112,6 @@ async def match(ctx):
             if str(reaction.emoji) == "➡":
                 await message.delete()
                 await create_match(team_2_players, team_1_players, ctx.guild.id, ctx)
-            await message.delete()
         else:
             message2 = ""
             users = set()
@@ -130,7 +128,6 @@ async def match(ctx):
                     async for user in reaction.users():
                         if user != bot.user:
                             right.add(user)
-                            users.add(user)
             if len(left) >= 0.75 * len(users):
                 await message.delete()
                 await create_match(team_1_players, team_2_players, ctx.guild.id, ctx)
