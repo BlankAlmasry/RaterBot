@@ -1,12 +1,10 @@
-import json
 from os import getenv
-
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 import requests as req
+from slugify import slugify
 
-client = discord.Client
 load_dotenv()
 
 intents = discord.Intents.default()
@@ -142,30 +140,31 @@ async def match(ctx):
 
 async def get_player_stats(message, guild_id, ctx):
     mentions = message.mentions
-    player = None
     if len(mentions) > 1:  # a user got mentioned
         player = mentions[1]
     else:
         player = message.author
     res = req.get(
-        RaterApi + "/games/" + str(guild_id) + "/users/" + player.name + player.discriminator,
+        RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
         headers=auth_headers
     )
     res1 = req.get(
         RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + player.name + player.discriminator + "?maxRatingDeviation=150",
+            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=150",
         headers=auth_headers
     )
     player = res.json()
     player_rank = res1.json()
     msg_res1 = ""
-    if player_rank['rank']:
+    if not player_rank['rank']['rank'] is None:
         msg_res1 = f"`Leaderboard: {player_rank['rank']['rank']}th Over {player_rank['rank']['all']} players`"
+    else:
+        msg_res1 = "`Leaderboard: not enough games yet`"
 
     msg = f"`Rank: {player['rank']['rank']}`\n" \
           f"`Rating: {player['rating']}`\n" \
           f"`Win/Loses: {player['wins']}/{player['loses']}`\n" \
-          f"`Win Ratio: {(player['wins'] / (player['loses'] + player['wins'])) * 100}%`\n" \
+          f"`Win Ratio: {round((player['wins'] / (player['loses'] + player['wins'])) * 100, 2)}%`\n" \
           f"{msg_res1}"
     await ctx.send(msg)
 
@@ -181,20 +180,21 @@ async def get_leaderboard(guild_id, author, page=1):
         page = 1
     res = req.get(
         RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + author.name + author.discriminator + "?maxRatingDeviation=350",
+            guild_id) + "/ranking/" + slugify(author.name) + author.discriminator + "?maxRatingDeviation=150",
         headers=auth_headers
     )
     rank = res.json()["rank"]["rank"]
     res = req.get(
-        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=350&page={page}",
+        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=150&page={page}",
         headers=auth_headers
     )
     leaderboard = res.json()
     header = "`     #Name       #Rank              #Rating \n"
     body = ""
     for index, user in enumerate(leaderboard["data"]):
-        index = index + (leaderboard['meta']['current_page']-1) * 10
-        user_msg = f" #{index + 1}{' ' * (4 - len(str(index + 1)))}{user['name'].split('#')[0]}{' ' * (12 - len(user['name'].split('#')[0]))}" \
+        index = index + (leaderboard['meta']['current_page'] - 1) * 10
+        user_msg = f" #{index + 1}{' ' * (4 - len(str(index + 1)))}" + \
+                   f"{user['name'].split('#')[0]}{' ' * (12 - len(user['name'].split('#')[0]))}" \
                    f"{user['rank']['rank']}{' ' * (19 - len(user['rank']['rank']))}" \
                    f"{round(user['rating'])}   \n"
         body += user_msg
@@ -205,7 +205,7 @@ async def get_leaderboard(guild_id, author, page=1):
     return header + body + footer
 
 
-@bot.command(pass_context=True, aliases=['leaderboard', 'levels', 'ranks', 'top', 'best', 'leader', 'lvls'])
+@bot.command(pass_context=True, aliases=['leaderboard', 'levels', 'ranks', 'top', 'best', 'leader', 'lvls', 'ranking'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def rankings(ctx):
     page = 1
