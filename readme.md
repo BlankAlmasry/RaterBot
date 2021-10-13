@@ -12,12 +12,17 @@ RaterBot is Discord bot that provides and ranking system for any customized game
 it will ask about the match result, once you provide which team won, will return new rating for each player in that match.
 example: 
 
-@Ace. 
-`Rank : Platinum I 14 LP
- Rating : 2115`
+@Ace.
+
+`Rank : Platinum I 14 LP`
+
+ `Rating : 2115`
+
  @Blank 
-`Rank : Challenger 603 LP
- Rating : 3203`
+
+`Rank : Challenger 603 LP`
+
+`Rating : 3203`
  
 ##  stats
 
