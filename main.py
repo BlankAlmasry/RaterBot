@@ -82,7 +82,7 @@ async def on_guild_remove(guild):
     remove_server(guild.id)
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, aliases=["rate", "play"])
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
     error_msg = validate_teams(ctx)
@@ -137,6 +137,36 @@ async def match(ctx):
             else:
                 if message2 == "":
                     message2 = await ctx.send('The winner must be agreed upon by 75% or more of the players')
+
+
+async def get_player_stats(player, guild_id, ctx):
+    res = req.get(
+        RaterApi + "/games/" + str(guild_id) + "/users/" + player.name + player.discriminator,
+        headers=auth_headers
+    )
+    res1 = req.get(
+        RaterApi + "/games/" + str(
+            guild_id) + "/ranking/" + player.name + player.discriminator + "?maxRatingDeviation=150",
+        headers=auth_headers
+    )
+    player = res.json()
+    player_rank = res1.json()
+    msg_res1 = ""
+    if player_rank['rank']:
+        msg_res1 = f"`Leaderboard: {player_rank['rank']['rank']}th Over {player_rank['rank']['all']} players`"
+
+    msg = f"`Rank: {player['rank']['rank']}`\n" \
+          f"`Rating: {player['rating']}`\n" \
+          f"`Win/Loses: {player['wins']}/{player['loses']}`\n" \
+          f"`Win Ratio: {(player['wins'] / (player['loses'] + player['wins'])) * 100}%`\n" \
+          f"{msg_res1}"
+    await ctx.send(msg)
+
+
+@bot.command(pass_context=True, aliases=['stats', 'level', 'rank'])
+@commands.cooldown(2, 1, commands.BucketType.guild)
+async def stat(ctx):
+    await get_player_stats(ctx.message.author, ctx.guild.id, ctx)
 
 
 bot.run(getenv("DISCORD_API"))
