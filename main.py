@@ -139,7 +139,13 @@ async def match(ctx):
                     message2 = await ctx.send('The winner must be agreed upon by 75% or more of the players')
 
 
-async def get_player_stats(player, guild_id, ctx):
+async def get_player_stats(message, guild_id, ctx):
+    mentions = message.mentions
+    player = None
+    if len(mentions) > 1:  # a user got mentioned
+        player = mentions[1]
+    else:
+        player = message.author
     res = req.get(
         RaterApi + "/games/" + str(guild_id) + "/users/" + player.name + player.discriminator,
         headers=auth_headers
@@ -166,7 +172,7 @@ async def get_player_stats(player, guild_id, ctx):
 @bot.command(pass_context=True, aliases=['stats', 'level', 'rank'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stat(ctx):
-    await get_player_stats(ctx.message.author, ctx.guild.id, ctx)
+    await get_player_stats(ctx.message, ctx.guild.id, ctx)
 
 
 bot.run(getenv("DISCORD_API"))
