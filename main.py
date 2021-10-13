@@ -1,3 +1,4 @@
+import json
 from os import getenv
 
 import discord
@@ -173,6 +174,54 @@ async def get_player_stats(message, guild_id, ctx):
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stat(ctx):
     await get_player_stats(ctx.message, ctx.guild.id, ctx)
+
+
+async def get_leaderboard(guild_id, author, page=1):
+    if page < 1:  # in case user asked for previous page when his is on the first page
+        page = 1
+    res = req.get(
+        RaterApi + "/games/" + str(
+            guild_id) + "/ranking/" + author.name + author.discriminator + "?maxRatingDeviation=350",
+        headers=auth_headers
+    )
+    rank = res.json()["rank"]["rank"]
+    res = req.get(
+        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=350&page={page}",
+        headers=auth_headers
+    )
+    leaderboard = res.json()
+    header = "`     #Name       #Rank              #Rating \n"
+    body = ""
+    for index, user in enumerate(leaderboard["data"]):
+        index = index + (leaderboard['meta']['current_page']-1) * 10
+        user_msg = f" #{index + 1}{' ' * (4 - len(str(index + 1)))}{user['name'].split('#')[0]}{' ' * (12 - len(user['name'].split('#')[0]))}" \
+                   f"{user['rank']['rank']}{' ' * (19 - len(user['rank']['rank']))}" \
+                   f"{round(user['rating'])}   \n"
+        body += user_msg
+    footer = f"   Page {leaderboard['meta']['current_page']}" \
+             f" of {leaderboard['meta']['last_page']} •" \
+             f" Your Rank: {rank} •  {author.name}" \
+             f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
+    return header + body + footer
+
+
+@bot.command(pass_context=True, aliases=['leaderboard', 'levels', 'ranks', 'top', 'best', 'leader', 'lvls'])
+@commands.cooldown(2, 1, commands.BucketType.guild)
+async def rankings(ctx):
+    page = 1
+    message = await ctx.send(await get_leaderboard(ctx.guild.id, ctx.message.author))
+    await message.add_reaction("⬅")
+    await message.add_reaction("➡")
+
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        if user == bot.user:
+            return
+        if user.permissions_in(ctx.channel).administrator:
+            if str(reaction.emoji) == "⬅":
+                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
+            if str(reaction.emoji) == "➡":
+                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
 
 
 bot.run(getenv("DISCORD_API"))
