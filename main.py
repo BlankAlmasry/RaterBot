@@ -81,7 +81,7 @@ async def on_guild_remove(guild):
     remove_server(guild.id)
 
 
-@bot.command(pass_context=True, aliases=["rate", "play"])
+@bot.command(pass_context=True, aliases=["rate", "play", "team", 'fight'])
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
     error_msg = validate_teams(ctx)
@@ -169,7 +169,7 @@ async def get_player_stats(message, guild_id, ctx):
     await ctx.send(msg)
 
 
-@bot.command(pass_context=True, aliases=['stats', 'level', 'rank','Rank','Stat','Level','lvl'])
+@bot.command(pass_context=True, aliases=['stats', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stat(ctx):
     await get_player_stats(ctx.message, ctx.guild.id, ctx)
@@ -207,7 +207,10 @@ async def get_leaderboard(guild_id, author, page=1):
     return header + body + footer
 
 
-@bot.command(pass_context=True, aliases=['leaderboard', 'levels', 'ranks', 'top', 'best', 'leader', 'lvls', 'ranking'])
+@bot.command(
+    pass_context=True,
+    aliases=['leaderboard', 'levels', 'ranks', 'top', 'Leaderboard',
+             'leader', 'lvls', 'ranking', 'Ranking', 'Top', 'best'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def rankings(ctx):
     page = 1
