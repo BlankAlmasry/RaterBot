@@ -189,6 +189,8 @@ async def get_leaderboard(guild_id, author, page=1):
         headers=auth_headers
     )
     leaderboard = res.json()
+    if not leaderboard["data"]:
+        return None
     header = "`     #Name       #Rank              #Rating \n"
     body = ""
     for index, user in enumerate(leaderboard["data"]):
@@ -200,7 +202,7 @@ async def get_leaderboard(guild_id, author, page=1):
         body += user_msg
     footer = f"   Page {leaderboard['meta']['current_page']}" \
              f" of {leaderboard['meta']['last_page']} •" \
-             f" Your Rank: {rank} •  {author.name}" \
+             f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
              f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
     return header + body + footer
 
@@ -209,13 +211,19 @@ async def get_leaderboard(guild_id, author, page=1):
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def rankings(ctx):
     page = 1
-    message = await ctx.send(await get_leaderboard(ctx.guild.id, ctx.message.author))
+    message = await get_leaderboard(ctx.guild.id, ctx.message.author)
+    if message is None:
+        await ctx.send("not enough games played in the server yet")
+    else:
+        await ctx.send(message)
     await message.add_reaction("⬅")
     await message.add_reaction("➡")
 
     @bot.event
     async def on_reaction_add(reaction, user):
         if user == bot.user:
+            return
+        if message is None:
             return
         if user.permissions_in(ctx.channel).administrator:
             if str(reaction.emoji) == "⬅":
