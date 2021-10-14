@@ -162,14 +162,14 @@ async def get_player_stats(message, guild_id, ctx):
         msg_res1 = "`Leaderboard: not enough games yet`"
 
     msg = f"`Rank: {player['rank']['rank']}`\n" \
-          f"`Rating: {player['rating']}`\n" \
+          f"`Rating: {int(player['rating'])}{'?' if player_rank['rank']['rank'] is None else ''}`\n" \
           f"`Win/Loses: {player['wins']}/{player['loses']}`\n" \
           f"`Win Ratio: {round((player['wins'] / (player['loses'] + player['wins'])) * 100, 2)}%`\n" \
           f"{msg_res1}"
     await ctx.send(msg)
 
 
-@bot.command(pass_context=True, aliases=['stats', 'level', 'rank'])
+@bot.command(pass_context=True, aliases=['stats', 'level', 'rank','Rank','Stat','Level','lvl'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stat(ctx):
     await get_player_stats(ctx.message, ctx.guild.id, ctx)
