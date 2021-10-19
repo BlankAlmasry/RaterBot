@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 import requests as req
 from slugify import slugify
-
+from match import *
 load_dotenv()
 
 intents = discord.Intents.default()
@@ -12,21 +12,6 @@ intents.members = True
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 RaterApi = "https://raterapi.azurewebsites.net/"
 auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
-
-
-def validate_teams(ctx):
-    if len(ctx.message.mentions) == 1:
-        # only the bot got mentions
-        return "mentions the players and separate between them with `vs` according to their tea,"
-
-    if len(ctx.message.mentions) == 2:
-        # only 1 player
-        return "mention both opponent in same line please, and separate them with `vs` "
-
-    if "vs" not in ctx.message.content:
-        return "separate the 2 teams with `vs` in between"
-    if (len(ctx.message.mentions) - 1) % 2 != 0:
-        return "uneven teams"
 
 
 async def create_match(winners, losers, guild_id, ctx):
@@ -84,7 +69,7 @@ async def on_guild_remove(guild):
 @bot.command(pass_context=True, aliases=["rate", "play", "team", 'fight'])
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
-    error_msg = validate_teams(ctx)
+    error_msg = validate_teams(ctx.message)
     if error_msg is not None:
         await ctx.send(error_msg)
     else:
