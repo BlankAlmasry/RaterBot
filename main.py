@@ -17,13 +17,6 @@ RaterApi = "https://raterapi.azurewebsites.net/"
 auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
 
-async def create_match(winners, losers, guild_id):
-    new_match = await match_factory(winners, losers)
-    res = await create_match_request(guild_id, new_match)
-    msg = await create_match_response(res)
-    return msg
-
-
 @bot.event
 async def on_guild_join(guild):
     add_server_request(guild.id)
@@ -41,28 +34,22 @@ async def match(ctx):
     if error_msg:
         await ctx.send(error_msg)
         return
-
-    message = await ctx.send('Which team won?')
-    await message.add_reaction("⬅")
-    await message.add_reaction("➡")
+    message = await start_voting(ctx)
     first_team_players, second_team_players = await fetch_first_and_second_team(ctx)
 
     @bot.event
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
-        if user.permissions_in(ctx.channel).administrator:
-            if str(reaction.emoji) == "⬅":
-                await message.delete()
-                msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
-                await ctx.send(msg)
-            if str(reaction.emoji) == "➡":
-                await message.delete()
-                msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
-                await ctx.send(msg)
+        # TODO return it back to if, was changed for testing purposes
+        if not user.permissions_in(ctx.channel).administrator:
+            await force_decision(reaction)
         else:
+            if user == bot.user:
+                return
             message2 = ""
-            users = set()
+            players_count = len(first_team_players) + len(second_team_players)
+            print(players_count)
             left = set()
             right = set()
             message1 = await ctx.fetch_message(message.id)
@@ -71,31 +58,33 @@ async def match(ctx):
                     async for user in reaction.users():
                         if user != bot.user:
                             left.add(user)
-                            users.add(user)
                 if reaction.emoji == "➡":
                     async for user in reaction.users():
                         if user != bot.user:
                             right.add(user)
-            if len(left) >= 0.75 * len(users):
-                await message.delete()
-                msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
-                await ctx.send(msg)
-            elif len(right) >= 0.75 * len(users):
-                await message.delete()
-                msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
-                await ctx.send(msg)
-            else:
-                if message2 == "":
-                    message2 = await ctx.send('The winner must be agreed upon by 75% or more of the players')
 
+            if user != bot.user:
+                if len(left) >= 0.75 * players_count:
+                    await message.delete()
+                    msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
+                    await ctx.send(msg)
+                elif len(right) >= 0.75 * players_count:
+                    await message.delete()
+                    msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
+                    await ctx.send(msg)
+                else:
+                    if message2 == "":
+                        message2 = await ctx.send('The winner must be agreed upon by 75% or more of the players')
 
-async def fetch_first_and_second_team(ctx):
-    mentions_len = len(ctx.message.mentions) - 1
-    team_1 = ctx.message.mentions[1: (mentions_len // 2) + 1]
-    team_2 = ctx.message.mentions[mentions_len // 2 + 1:]
-    first_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
-    second_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
-    return first_team_players, second_team_players
+    async def force_decision(reaction):
+        if str(reaction.emoji) == "⬅":
+            await message.delete()
+            msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
+            await ctx.send(msg)
+        if str(reaction.emoji) == "➡":
+            await message.delete()
+            msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
+            await ctx.send(msg)
 
 
 async def get_player_stats(message, guild_id, ctx):
@@ -195,6 +184,15 @@ async def rankings(ctx):
                 await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
 
 
+# TODO move functions to other files
+
+async def create_match(winners, losers, guild_id):
+    new_match = await match_factory(winners, losers)
+    res = await create_match_request(guild_id, new_match)
+    msg = await create_match_response(res)
+    return msg
+
+
 async def create_match_response(data):
     data = dict(data.json())
     msg = "**New Ratings**\n"
@@ -216,6 +214,22 @@ def add_server_request(guild_id):
 
 def remove_server_request(guild_id):
     req.delete(RaterApi + "/games/" + str(guild_id), headers=auth_headers)
+
+
+async def start_voting(ctx):
+    message = await ctx.send('Which team won?')
+    await message.add_reaction("⬅")
+    await message.add_reaction("➡")
+    return message
+
+
+async def fetch_first_and_second_team(ctx):
+    mentions_len = len(ctx.message.mentions) - 1
+    team_1 = ctx.message.mentions[1: (mentions_len // 2) + 1]
+    team_2 = ctx.message.mentions[mentions_len // 2 + 1:]
+    first_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
+    second_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
+    return first_team_players, second_team_players
 
 
 bot.run(getenv("DISCORD_API"))
