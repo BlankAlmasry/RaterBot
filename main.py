@@ -24,26 +24,14 @@ async def create_match(winners, losers, guild_id):
     return msg
 
 
-def add_server(guild_id):
-    req.post(
-        RaterApi + "/games",
-        {"name": str(guild_id)},
-        headers=auth_headers
-    )
-
-
-def remove_server(guild_id):
-    req.delete(RaterApi + "/games/" + str(guild_id), headers=auth_headers)
-
-
 @bot.event
 async def on_guild_join(guild):
-    add_server(guild.id)
+    add_server_request(guild.id)
 
 
 @bot.event
 async def on_guild_remove(guild):
-    remove_server(guild.id)
+    remove_server_request(guild.id)
 
 
 @bot.command(pass_context=True, aliases=["rate", "play", "team", 'fight'])
@@ -52,6 +40,7 @@ async def match(ctx):
     error_msg = validate_teams(ctx.message)
     if error_msg is not None:
         await ctx.send(error_msg)
+        return
     else:
         message = await ctx.send('Which team won?')
         await message.add_reaction("⬅")
@@ -213,6 +202,18 @@ async def create_match_response(data):
             "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
             round(user["rating"])) + "`\n"
     return msg
+
+
+def add_server_request(guild_id):
+    req.post(
+        RaterApi + "/games",
+        {"name": str(guild_id)},
+        headers=auth_headers
+    )
+
+
+def remove_server_request(guild_id):
+    req.delete(RaterApi + "/games/" + str(guild_id), headers=auth_headers)
 
 
 bot.run(getenv("DISCORD_API"))
