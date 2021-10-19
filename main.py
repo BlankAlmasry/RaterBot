@@ -20,16 +20,7 @@ auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 async def create_match(winners, losers, guild_id):
     new_match = await match_factory(winners, losers)
     res = await create_match_request(guild_id, new_match)
-
-    data = dict(res.json())
-    msg = "**New Ratings**\n"
-    for user in data["users"]:
-        user_name = (user["name"].split("#"))[0]
-        user_discriminator = (user["name"].split("#"))[1]
-        user_mention = discord.utils.get(bot.get_all_members(), name=user_name, discriminator=user_discriminator)
-        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
-            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
-            round(user["rating"])) + "`\n"
+    msg = await create_match_response(res)
     return msg
 
 
@@ -211,6 +202,17 @@ async def rankings(ctx):
                 await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
             if str(reaction.emoji) == "➡":
                 await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
+
+
+async def create_match_response(data):
+    data = dict(data.json())
+    msg = "**New Ratings**\n"
+    for user in data["users"]:
+        user_mention = discord.utils.find(lambda n: str(n) == user["name"], bot.get_all_members())
+        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
+            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
+            round(user["rating"])) + "`\n"
+    return msg
 
 
 bot.run(getenv("DISCORD_API"))
