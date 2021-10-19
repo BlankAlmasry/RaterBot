@@ -45,11 +45,7 @@ async def match(ctx):
     message = await ctx.send('Which team won?')
     await message.add_reaction("⬅")
     await message.add_reaction("➡")
-    mentions_len = len(ctx.message.mentions) - 1
-    team_1 = ctx.message.mentions[1: (mentions_len // 2) + 1]
-    team_2 = ctx.message.mentions[mentions_len // 2 + 1:]
-    team_1_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
-    team_2_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
+    first_team_players, second_team_players = await fetch_first_and_second_team(ctx)
 
     @bot.event
     async def on_reaction_add(reaction, user):
@@ -58,11 +54,11 @@ async def match(ctx):
         if user.permissions_in(ctx.channel).administrator:
             if str(reaction.emoji) == "⬅":
                 await message.delete()
-                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
                 await ctx.send(msg)
             if str(reaction.emoji) == "➡":
                 await message.delete()
-                msg = await create_match(team_2_players, team_1_players, ctx.guild.id)
+                msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
                 await ctx.send(msg)
         else:
             message2 = ""
@@ -82,15 +78,24 @@ async def match(ctx):
                             right.add(user)
             if len(left) >= 0.75 * len(users):
                 await message.delete()
-                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
                 await ctx.send(msg)
             elif len(right) >= 0.75 * len(users):
                 await message.delete()
-                msg = await create_match(team_2_players, team_1_players, ctx.guild.id)
+                msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
                 await ctx.send(msg)
             else:
                 if message2 == "":
                     message2 = await ctx.send('The winner must be agreed upon by 75% or more of the players')
+
+
+async def fetch_first_and_second_team(ctx):
+    mentions_len = len(ctx.message.mentions) - 1
+    team_1 = ctx.message.mentions[1: (mentions_len // 2) + 1]
+    team_2 = ctx.message.mentions[mentions_len // 2 + 1:]
+    first_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
+    second_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
+    return first_team_players, second_team_players
 
 
 async def get_player_stats(message, guild_id, ctx):
