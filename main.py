@@ -5,6 +5,7 @@ from discord.ext import commands
 import requests as req
 from slugify import slugify
 from match import *
+
 load_dotenv()
 
 intents = discord.Intents.default()
@@ -14,7 +15,7 @@ RaterApi = "https://raterapi.azurewebsites.net/"
 auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
 
-async def create_match(winners, losers, guild_id, ctx):
+async def create_match(winners, losers, guild_id):
     match_data = {
         "teams": [
             {
@@ -41,7 +42,7 @@ async def create_match(winners, losers, guild_id, ctx):
         msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
             "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
             round(user["rating"])) + "`\n"
-    await ctx.send(msg)
+    return msg
 
 
 def add_server(guild_id):
@@ -92,10 +93,12 @@ async def match(ctx):
         if user.permissions_in(ctx.channel).administrator:
             if str(reaction.emoji) == "⬅":
                 await message.delete()
-                await create_match(team_1_players, team_2_players, ctx.guild.id, ctx)
+                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                await ctx.send(msg)
             if str(reaction.emoji) == "➡":
                 await message.delete()
-                await create_match(team_2_players, team_1_players, ctx.guild.id, ctx)
+                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                await ctx.send(msg)
         else:
             message2 = ""
             users = set()
@@ -114,10 +117,12 @@ async def match(ctx):
                             right.add(user)
             if len(left) >= 0.75 * len(users):
                 await message.delete()
-                await create_match(team_1_players, team_2_players, ctx.guild.id, ctx)
+                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                await ctx.send(msg)
             elif len(right) >= 0.75 * len(users):
                 await message.delete()
-                await create_match(team_1_players, team_2_players, ctx.guild.id, ctx)
+                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                await ctx.send(msg)
             else:
                 if message2 == "":
                     message2 = await ctx.send('The winner must be agreed upon by 75% or more of the players')
