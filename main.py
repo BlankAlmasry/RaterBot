@@ -34,8 +34,7 @@ async def match(ctx):
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
-        # TODO return it back to if, was changed for testing purposes
-        if not user.permissions_in(ctx.channel).administrator:
+        if user.permissions_in(ctx.channel).administrator:
             await force_decision(reaction)
         else:
             if user == bot.user:
