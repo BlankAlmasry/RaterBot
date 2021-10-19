@@ -1,10 +1,3 @@
-import json
-from collections import namedtuple
-from os import getenv
-import discord
-from dotenv import load_dotenv
-from discord.ext import commands
-import requests as req
 from slugify import slugify
 from match import *
 
@@ -47,34 +40,39 @@ async def match(ctx):
         else:
             if user == bot.user:
                 return
-            message2 = ""
-            players_count = len(first_team_players) + len(second_team_players)
-            print(players_count)
-            left = set()
-            right = set()
-            message1 = await ctx.fetch_message(message.id)
-            for reaction in message1.reactions:
-                if reaction.emoji == "⬅":
-                    async for user in reaction.users():
-                        if user != bot.user:
-                            left.add(user)
-                if reaction.emoji == "➡":
-                    async for user in reaction.users():
-                        if user != bot.user:
-                            right.add(user)
+            all_players = (first_team_players + second_team_players)
+            voting_pool = await ctx.fetch_message(message.id)
+            left, right = await vote(voting_pool, all_players)
+            await count_if_votes_efficient(left, right, all_players)
 
-            if user != bot.user:
-                if len(left) >= 0.75 * players_count:
-                    await message.delete()
-                    msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
-                    await ctx.send(msg)
-                elif len(right) >= 0.75 * players_count:
-                    await message.delete()
-                    msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
-                    await ctx.send(msg)
-                else:
-                    if message2 == "":
-                        message2 = await ctx.send('The winner must be agreed upon by 75% or more of the players')
+    async def count_if_votes_efficient(left, right, all_players):
+        if len(left) >= 0.75 * len(all_players):
+            await message.delete()
+            msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
+            await ctx.send(msg)
+        elif len(right) >= 0.75 * len(all_players):
+            await message.delete()
+            msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
+            await ctx.send(msg)
+        else:
+            if len(left) == 1 or len(right) == 1:
+                await ctx.send('The winner must be agreed upon by 75% or more of the players')
+
+    async def vote(voting_pool, all_players):
+        left = set()
+        right = set()
+        for reaction in voting_pool.reactions:
+            if reaction.emoji == "⬅":
+                async for user in reaction.users():
+                    if user != bot.user and \
+                            user.name + "#" + user.discriminator in all_players:
+                        left.add(user)
+            if reaction.emoji == "➡":
+                async for user in reaction.users():
+                    if user != bot.user and \
+                            user.name + "#" + user.discriminator in all_players:
+                        right.add(user)
+        return tuple(left), tuple(right)
 
     async def force_decision(reaction):
         if str(reaction.emoji) == "⬅":
@@ -99,7 +97,7 @@ async def get_player_stats(message, guild_id, ctx):
     )
     res1 = req.get(
         RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=150",
+            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=200",
         headers=auth_headers
     )
     player = res.json()
@@ -129,12 +127,12 @@ async def get_leaderboard(guild_id, author, page=1):
         page = 1
     res = req.get(
         RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + slugify(author.name) + author.discriminator + "?maxRatingDeviation=150",
+            guild_id) + "/ranking/" + slugify(author.name) + author.discriminator + "?maxRatingDeviation=200",
         headers=auth_headers
     )
     rank = res.json()["rank"]["rank"]
     res = req.get(
-        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=150&page={page}",
+        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=200&page={page}",
         headers=auth_headers
     )
     leaderboard = res.json()
