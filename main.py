@@ -1,3 +1,4 @@
+import json
 from collections import namedtuple
 from os import getenv
 import discord
@@ -17,17 +18,9 @@ auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
 
 async def create_match(winners, losers, guild_id):
-    Match = namedtuple("Match", "teams")
-    match_data = Match([
-        {"user": winners, "result": 1},
-        {"user": losers, "result": 0}
-    ])
+    new_match = await match_factory(winners, losers)
+    res = await create_match_request(guild_id, new_match)
 
-    res = req.post(
-        RaterApi + "/games/" + str(guild_id) + "/matches",
-        json=match_data,
-        headers=auth_headers
-    )
     data = dict(res.json())
     msg = "**New Ratings**\n"
     for user in data["users"]:
@@ -92,7 +85,7 @@ async def match(ctx):
                 await ctx.send(msg)
             if str(reaction.emoji) == "➡":
                 await message.delete()
-                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                msg = await create_match(team_2_players, team_1_players, ctx.guild.id)
                 await ctx.send(msg)
         else:
             message2 = ""
@@ -116,7 +109,7 @@ async def match(ctx):
                 await ctx.send(msg)
             elif len(right) >= 0.75 * len(users):
                 await message.delete()
-                msg = await create_match(team_1_players, team_2_players, ctx.guild.id)
+                msg = await create_match(team_2_players, team_1_players, ctx.guild.id)
                 await ctx.send(msg)
             else:
                 if message2 == "":
