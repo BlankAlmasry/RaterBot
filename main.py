@@ -38,21 +38,18 @@ async def on_guild_remove(guild):
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
     error_msg = validate_teams(ctx.message)
-    if error_msg is not None:
+    if error_msg:
         await ctx.send(error_msg)
         return
-    else:
-        message = await ctx.send('Which team won?')
-        await message.add_reaction("⬅")
-        await message.add_reaction("➡")
+
+    message = await ctx.send('Which team won?')
+    await message.add_reaction("⬅")
+    await message.add_reaction("➡")
     mentions_len = len(ctx.message.mentions) - 1
     team_1 = ctx.message.mentions[1: (mentions_len // 2) + 1]
     team_2 = ctx.message.mentions[mentions_len // 2 + 1:]
-    team_1_players = list()
-    team_2_players = list()
-    for idx, val in enumerate(team_1):
-        team_1_players.append(team_1[idx].name + "#" + team_1[idx].discriminator)
-        team_2_players.append(team_2[idx].name + "#" + team_2[idx].discriminator)
+    team_1_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
+    team_2_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
 
     @bot.event
     async def on_reaction_add(reaction, user):
