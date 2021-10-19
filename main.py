@@ -1,3 +1,4 @@
+from collections import namedtuple
 from os import getenv
 import discord
 from dotenv import load_dotenv
@@ -16,18 +17,12 @@ auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
 
 async def create_match(winners, losers, guild_id):
-    match_data = {
-        "teams": [
-            {
-                "users": winners,
-                "result": 1
-            },
-            {
-                "users": losers,
-                "result": 0
-            }
-        ]
-    }
+    Match = namedtuple("Match", "teams")
+    match_data = Match([
+        {"user": winners, "result": 1},
+        {"user": losers, "result": 0}
+    ])
+
     res = req.post(
         RaterApi + "/games/" + str(guild_id) + "/matches",
         json=match_data,
