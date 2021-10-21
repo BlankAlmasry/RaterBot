@@ -1,6 +1,6 @@
 from slugify import slugify
 from match import *
-
+from raterapi_requests import *
 load_dotenv()
 
 intents = discord.Intents.default()
@@ -124,19 +124,6 @@ async def create_get_rank_response(player_rank):
     return response
 
 
-async def get_user_rank_request(guild_id, player):
-    return req.get(
-        RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=200",
-        headers=auth_headers
-    ).json()
-
-
-async def get_user_stats_request(guild_id, player):
-    return req.get(
-        RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
-        headers=auth_headers
-    ).json()
 
 
 async def fetch_user_who_got_mentions_or_message_author(message):
@@ -165,17 +152,6 @@ async def create_match_response(data):
             round(user["rating"])) + "`\n"
     return msg
 
-
-def add_server_request(guild_id):
-    req.post(
-        RaterApi + "/games",
-        {"name": str(guild_id)},
-        headers=auth_headers
-    )
-
-
-def remove_server_request(guild_id):
-    req.delete(RaterApi + "/games/" + str(guild_id), headers=auth_headers)
 
 
 async def start_voting(ctx):
@@ -237,7 +213,7 @@ async def get_leaderboard(guild_id, author, page=1):
     # validate page exist
     if not leaderboard["data"]:
         return None
-    rank_on_server = await get_user_rank_request(guild_id, author)["rank"]["rank"]
+    rank_on_server = (await get_user_rank_request(guild_id, author))["rank"]["rank"]
     return await create_leaderboard_response(author, leaderboard, rank_on_server)
 
 
@@ -257,12 +233,6 @@ async def create_leaderboard_response(author, leaderboard, rank):
              f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
     return header + body + footer
 
-
-async def get_leaderboard_request(guild_id, page):
-    return req.get(
-        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=200&page={page}",
-        headers=auth_headers
-    ).json()
 
 
 def is_bot(user):

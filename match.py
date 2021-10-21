@@ -1,11 +1,8 @@
 from collections import namedtuple
-import json
-from collections import namedtuple
 from os import getenv
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
-import requests as req
 
 load_dotenv()
 
@@ -23,15 +20,6 @@ async def match_factory(winners, losers):
         {"users": losers, "result": 0}
     ])
     return match_data._asdict()
-
-
-async def create_match_request(guild_id, match_data):
-    res = req.post(
-        RaterApi + "/games/" + str(guild_id) + "/matches",
-        json=match_data,
-        headers=auth_headers
-    )
-    return res
 
 
 def validate_teams(message):
