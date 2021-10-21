@@ -20,6 +20,10 @@ async def on_guild_remove(guild):
     remove_server_request(guild.id)
 
 
+def is_bot(user):
+    return user == bot.user
+
+
 @bot.command(pass_context=True, aliases=["rate", "play", "team", 'fight'])
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
@@ -32,13 +36,13 @@ async def match(ctx):
 
     @bot.event
     async def on_reaction_add(reaction, user, non_efficient_votes=None):
-        if user == bot.user:
+        if is_bot(user):
             return
         if user.permissions_in(ctx.channel).administrator:
             winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
             await execute_result(losers, winners)
         else:
-            if user == bot.user:
+            if is_bot(user):
                 return
             voting_pool = await ctx.fetch_message(message.id)
             left, right = await vote(voting_pool, first_team_players, second_team_players)
@@ -56,39 +60,38 @@ async def match(ctx):
         await ctx.send(msg)
 
 
-async def force_admin_decision(reaction, first_team_players, second_team_players):
-    if str(reaction.emoji) == "⬅":
-        return first_team_players, second_team_players
-    if str(reaction.emoji) == "➡":
-        return second_team_players, first_team_players
+@bot.command(pass_context=True, aliases=['stats', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
+@commands.cooldown(2, 1, commands.BucketType.guild)
+async def stat(ctx):
+    await get_player_stats(ctx.message, ctx.guild.id, ctx)
 
 
-async def count_if_votes_efficient(left, right, first_team_players, second_team_players):
-    all_players = (first_team_players + second_team_players)
-    if len(left) >= 0.75 * len(all_players):
-        return True, first_team_players, second_team_players
-    elif len(right) >= 0.75 * len(all_players):
-        return True, second_team_players, first_team_players
+@bot.command(
+    pass_context=True,
+    aliases=['leaderboard', 'levels', 'ranks', 'top', 'Leaderboard',
+             'leader', 'lvls', 'ranking', 'Ranking', 'Top', 'best'])
+@commands.cooldown(2, 1, commands.BucketType.guild)
+async def rankings(ctx):
+    page = 1
+    message = await get_leaderboard(ctx.guild.id, ctx.message.author)
+    if message is None:
+        await ctx.send("not enough games played in the server yet")
     else:
-        return False, None, None
+        await ctx.send(message)
+    await message.add_reaction("⬅")
+    await message.add_reaction("➡")
 
-
-async def vote(voting_pool, first_team_players, second_team_players):
-    all_players = (first_team_players + second_team_players)
-    left = set()
-    right = set()
-    for reaction in voting_pool.reactions:
-        if reaction.emoji == "⬅":
-            async for user in reaction.users():
-                if user != bot.user and \
-                        user.name + "#" + user.discriminator in all_players:
-                    left.add(user)
-        if reaction.emoji == "➡":
-            async for user in reaction.users():
-                if user != bot.user and \
-                        user.name + "#" + user.discriminator in all_players:
-                    right.add(user)
-    return tuple(left), tuple(right)
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        if user == bot.user:
+            return
+        if message is None:
+            return
+        if user.permissions_in(ctx.channel).administrator:
+            if str(reaction.emoji) == "⬅":
+                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
+            if str(reaction.emoji) == "➡":
+                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
 
 
 async def get_player_stats(message, guild_id, ctx):
@@ -122,70 +125,9 @@ async def get_player_stats(message, guild_id, ctx):
     await ctx.send(msg)
 
 
-@bot.command(pass_context=True, aliases=['stats', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
-@commands.cooldown(2, 1, commands.BucketType.guild)
-async def stat(ctx):
-    await get_player_stats(ctx.message, ctx.guild.id, ctx)
-
-
-async def get_leaderboard(guild_id, author, page=1):
-    if page < 1:  # in case user asked for previous page when his is on the first page
-        page = 1
-    res = req.get(
-        RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + slugify(author.name) + author.discriminator + "?maxRatingDeviation=200",
-        headers=auth_headers
-    )
-    rank = res.json()["rank"]["rank"]
-    res = req.get(
-        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=200&page={page}",
-        headers=auth_headers
-    )
-    leaderboard = res.json()
-    if not leaderboard["data"]:
-        return None
-    header = "`     #Name       #Rank              #Rating \n"
-    body = ""
-    for index, user in enumerate(leaderboard["data"]):
-        index = index + (leaderboard['meta']['current_page'] - 1) * 10
-        user_msg = f" #{index + 1}{' ' * (4 - len(str(index + 1)))}" + \
-                   f"{user['name'].split('#')[0]}{' ' * (12 - len(user['name'].split('#')[0]))}" \
-                   f"{user['rank']['rank']}{' ' * (19 - len(user['rank']['rank']))}" \
-                   f"{round(user['rating'])}   \n"
-        body += user_msg
-    footer = f"   Page {leaderboard['meta']['current_page']}" \
-             f" of {leaderboard['meta']['last_page']} •" \
-             f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
-             f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
-    return header + body + footer
-
-
-@bot.command(
-    pass_context=True,
-    aliases=['leaderboard', 'levels', 'ranks', 'top', 'Leaderboard',
-             'leader', 'lvls', 'ranking', 'Ranking', 'Top', 'best'])
-@commands.cooldown(2, 1, commands.BucketType.guild)
-async def rankings(ctx):
-    page = 1
-    message = await get_leaderboard(ctx.guild.id, ctx.message.author)
-    if message is None:
-        await ctx.send("not enough games played in the server yet")
-    else:
-        await ctx.send(message)
-    await message.add_reaction("⬅")
-    await message.add_reaction("➡")
-
-    @bot.event
-    async def on_reaction_add(reaction, user):
-        if user == bot.user:
-            return
-        if message is None:
-            return
-        if user.permissions_in(ctx.channel).administrator:
-            if str(reaction.emoji) == "⬅":
-                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
-            if str(reaction.emoji) == "➡":
-                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
+"""
+FUNCTIONS
+"""
 
 
 # TODO move functions to other files
@@ -234,6 +176,73 @@ async def fetch_first_and_second_team(ctx):
     first_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
     second_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
     return first_team_players, second_team_players
+
+
+async def force_admin_decision(reaction, first_team_players, second_team_players):
+    if str(reaction.emoji) == "⬅":
+        return first_team_players, second_team_players
+    if str(reaction.emoji) == "➡":
+        return second_team_players, first_team_players
+
+
+async def count_if_votes_efficient(left, right, first_team_players, second_team_players):
+    all_players = (first_team_players + second_team_players)
+    if len(left) >= 0.75 * len(all_players):
+        return True, first_team_players, second_team_players
+    elif len(right) >= 0.75 * len(all_players):
+        return True, second_team_players, first_team_players
+    else:
+        return False, None, None
+
+
+async def vote(voting_pool, first_team_players, second_team_players):
+    all_players = (first_team_players + second_team_players)
+    left = set()
+    right = set()
+    for reaction in voting_pool.reactions:
+        if reaction.emoji == "⬅":
+            async for user in reaction.users():
+                if user != bot.user and \
+                        user.name + "#" + user.discriminator in all_players:
+                    left.add(user)
+        if reaction.emoji == "➡":
+            async for user in reaction.users():
+                if user != bot.user and \
+                        user.name + "#" + user.discriminator in all_players:
+                    right.add(user)
+    return tuple(left), tuple(right)
+
+
+async def get_leaderboard(guild_id, author, page=1):
+    if page < 1:  # in case user asked for previous page when his is on the first page
+        page = 1
+    res = req.get(
+        RaterApi + "/games/" + str(
+            guild_id) + "/ranking/" + slugify(author.name) + author.discriminator + "?maxRatingDeviation=200",
+        headers=auth_headers
+    )
+    rank = res.json()["rank"]["rank"]
+    res = req.get(
+        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=200&page={page}",
+        headers=auth_headers
+    )
+    leaderboard = res.json()
+    if not leaderboard["data"]:
+        return None
+    header = "`     #Name       #Rank              #Rating \n"
+    body = ""
+    for index, user in enumerate(leaderboard["data"]):
+        index = index + (leaderboard['meta']['current_page'] - 1) * 10
+        user_msg = f" #{index + 1}{' ' * (4 - len(str(index + 1)))}" + \
+                   f"{user['name'].split('#')[0]}{' ' * (12 - len(user['name'].split('#')[0]))}" \
+                   f"{user['rank']['rank']}{' ' * (19 - len(user['rank']['rank']))}" \
+                   f"{round(user['rating'])}   \n"
+        body += user_msg
+    footer = f"   Page {leaderboard['meta']['current_page']}" \
+             f" of {leaderboard['meta']['last_page']} •" \
+             f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
+             f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
+    return header + body + footer
 
 
 bot.run(getenv("DISCORD_API"))
