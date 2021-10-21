@@ -56,11 +56,12 @@ async def match(ctx):
         await ctx.send(msg)
 
 
-@bot.command(pass_context=True, aliases=['stat', 'stats', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
+@bot.command(pass_context=True, aliases=['stat:', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
-async def stat(ctx):
+async def stats(ctx):
     msg = await get_player_stats(ctx.message, ctx.guild.id)
     await ctx.send(msg)
+
 
 @bot.command(
     pass_context=True,
@@ -91,15 +92,12 @@ async def rankings(ctx):
 
 
 async def get_player_stats(message, guild_id):
-    mentions = message.mentions
-    if len(mentions) > 1:  # a user got mentioned
-        player = mentions[1]
-    else:
-        player = message.author
+    player = await fetch_user_who_got_mentions_or_message_author(message)
     res = req.get(
         RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
         headers=auth_headers
     )
+
     res1 = req.get(
         RaterApi + "/games/" + str(
             guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=200",
@@ -127,6 +125,15 @@ FUNCTIONS
 
 
 # TODO move functions to other files
+
+async def fetch_user_who_got_mentions_or_message_author(message):
+    mentions = message.mentions
+    if len(mentions) > 1:  # a user got mentioned
+        player = mentions[1]
+    else:
+        player = message.author
+    return player
+
 
 async def create_match(winners, losers, guild_id):
     new_match = await match_factory(winners, losers)
