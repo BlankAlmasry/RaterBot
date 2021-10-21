@@ -4,8 +4,6 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 
-from main import find_user
-
 load_dotenv()
 
 intents = discord.Intents.default()
@@ -95,11 +93,3 @@ async def start_voting(ctx):
     return message
 
 
-async def create_match_response(data):
-    msg = "**New Ratings**\n"
-    for user in data["users"]:
-        user_mention = await find_user(user["name"])
-        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
-            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
-            round(user["rating"])) + "`\n"
-    return msg

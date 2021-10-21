@@ -106,6 +106,16 @@ async def create_match(winners, losers, guild_id):
     return msg
 
 
+async def create_match_response(data):
+    msg = "**New Ratings**\n"
+    for user in data["users"]:
+        user_mention = await find_user(user["name"])
+        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
+            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
+            round(user["rating"])) + "`\n"
+    return msg
+
+
 async def find_user(name):
     return discord.utils.find(lambda n: str(n) == name, bot.get_all_members())
 
