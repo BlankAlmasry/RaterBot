@@ -116,12 +116,12 @@ async def create_player_stat_response(player, player_rank):
 
 
 async def create_get_rank_response(player_rank):
-    msg_res1 = ""
+    response = ""
     if not player_rank['rank']['rank'] is None:
-        msg_res1 = f"`Leaderboard: {player_rank['rank']['rank']}th Over {player_rank['rank']['all']} players`"
+        response = f"`Leaderboard: {player_rank['rank']['rank']}th Over {player_rank['rank']['all']} players`"
     else:
-        msg_res1 = "`Leaderboard: not enough games yet`"
-    return msg_res1
+        response = "`Leaderboard: not enough games yet`"
+    return response
 
 
 async def get_user_rank_request(guild_id, player):
@@ -229,22 +229,19 @@ async def vote(voting_pool, first_team_players, second_team_players):
     return tuple(left), tuple(right)
 
 
+# noinspection PyUnresolvedReferences
 async def get_leaderboard(guild_id, author, page=1):
     if page < 1:  # in case user asked for previous page when his is on the first page
         page = 1
-    res = req.get(
-        RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + slugify(author.name) + author.discriminator + "?maxRatingDeviation=200",
-        headers=auth_headers
-    )
-    rank = res.json()["rank"]["rank"]
-    res = req.get(
-        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=200&page={page}",
-        headers=auth_headers
-    )
-    leaderboard = res.json()
+    leaderboard = await get_leaderboard_request(guild_id, page)
+    # validate page exist
     if not leaderboard["data"]:
         return None
+    rank_on_server = await get_user_rank_request(guild_id, author)["rank"]["rank"]
+    return await create_leaderboard_response(author, leaderboard, rank_on_server)
+
+
+async def create_leaderboard_response(author, leaderboard, rank):
     header = "`     #Name       #Rank              #Rating \n"
     body = ""
     for index, user in enumerate(leaderboard["data"]):
@@ -259,6 +256,13 @@ async def get_leaderboard(guild_id, author, page=1):
              f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
              f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
     return header + body + footer
+
+
+async def get_leaderboard_request(guild_id, page):
+    return req.get(
+        RaterApi + "/games/" + str(guild_id) + f"/ranking/?maxRatingDeviation=200&page={page}",
+        headers=auth_headers
+    ).json()
 
 
 def is_bot(user):
