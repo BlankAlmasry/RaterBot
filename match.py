@@ -15,6 +15,9 @@ RaterApi = "https://raterapi.azurewebsites.net/"
 auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
 
+# TODO move functions to other files
+
+
 async def match_factory(winners, losers):
     Match = namedtuple("Match", "teams")
     match_data = Match([
