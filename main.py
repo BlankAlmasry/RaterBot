@@ -20,10 +20,6 @@ async def on_guild_remove(guild):
     remove_server_request(guild.id)
 
 
-def is_bot(user):
-    return user == bot.user
-
-
 @bot.command(pass_context=True, aliases=["rate", "play", "team", 'fight'])
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
@@ -63,8 +59,8 @@ async def match(ctx):
 @bot.command(pass_context=True, aliases=['stats', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stat(ctx):
-    await get_player_stats(ctx.message, ctx.guild.id, ctx)
-
+    msg = await get_player_stats(ctx.message, ctx.guild.id, ctx)
+    await ctx.send(msg)
 
 @bot.command(
     pass_context=True,
@@ -122,7 +118,7 @@ async def get_player_stats(message, guild_id, ctx):
           f"`Win/Loses: {player['wins']}/{player['loses']}`\n" \
           f"`Win Ratio: {round((player['wins'] / (player['loses'] + player['wins'])) * 100, 2)}%`\n" \
           f"{msg_res1}"
-    await ctx.send(msg)
+    return msg
 
 
 """
@@ -243,6 +239,10 @@ async def get_leaderboard(guild_id, author, page=1):
              f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
              f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
     return header + body + footer
+
+
+def is_bot(user):
+    return user == bot.user
 
 
 bot.run(getenv("DISCORD_API"))
