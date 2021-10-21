@@ -1,5 +1,6 @@
 from match import *
 from raterapi_requests import *
+from command_responses import *
 
 load_dotenv()
 
@@ -94,6 +95,15 @@ FUNCTIONS
 
 # TODO move functions to other files
 
+async def create_match_response(data):
+    msg = "**New Ratings**\n"
+    for user in data["users"]:
+        user_mention = discord.utils.find(lambda n: str(n) == user["name"], bot.get_all_members())
+        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
+            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
+            round(user["rating"])) + "`\n"
+    return msg
+
 
 async def get_player_stats(player, guild_id):
     player_stats = await get_user_stats_request(guild_id, player)
@@ -103,23 +113,6 @@ async def get_player_stats(player, guild_id):
     user_rank_message = await create_get_rank_response(player_rank)
 
     return user_stats_message + user_rank_message
-
-
-async def create_player_stat_response(player, player_rank):
-    msg = f"`Rank: {player['rank']['rank']}`\n" \
-          f"`Rating: {int(player['rating'])}{'?' if player_rank['rank']['rank'] is None else ''}`\n" \
-          f"`Win/Loses: {player['wins']}/{player['loses']}`\n" \
-          f"`Win Ratio: {round((player['wins'] / (player['loses'] + player['wins'])) * 100, 2)}%`\n"
-    return msg
-
-
-async def create_get_rank_response(player_rank):
-    response = ""
-    if not player_rank['rank']['rank'] is None:
-        response = f"`Leaderboard: {player_rank['rank']['rank']}th Over {player_rank['rank']['all']} players`"
-    else:
-        response = "`Leaderboard: not enough games yet`"
-    return response
 
 
 async def fetch_user_who_got_mentions_or_message_author(message):
@@ -135,17 +128,6 @@ async def create_match(winners, losers, guild_id):
     new_match = await match_factory(winners, losers)
     res = await create_match_request(guild_id, new_match)
     msg = await create_match_response(res)
-    return msg
-
-
-async def create_match_response(data):
-    data = dict(data)
-    msg = "**New Ratings**\n"
-    for user in data["users"]:
-        user_mention = discord.utils.find(lambda n: str(n) == user["name"], bot.get_all_members())
-        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
-            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
-            round(user["rating"])) + "`\n"
     return msg
 
 
@@ -200,7 +182,6 @@ async def vote(voting_pool, first_team_players, second_team_players):
     return tuple(left), tuple(right)
 
 
-# noinspection PyUnresolvedReferences
 async def get_leaderboard(guild_id, author, page=1):
     if page < 1:  # in case user asked for previous page when his is on the first page
         page = 1
@@ -210,23 +191,6 @@ async def get_leaderboard(guild_id, author, page=1):
         return None
     rank_on_server = (await get_user_rank_request(guild_id, author))["rank"]["rank"]
     return await create_leaderboard_response(author, leaderboard, rank_on_server)
-
-
-async def create_leaderboard_response(author, leaderboard, rank):
-    header = "`     #Name       #Rank              #Rating \n"
-    body = ""
-    for index, user in enumerate(leaderboard["data"]):
-        index = index + (leaderboard['meta']['current_page'] - 1) * 10
-        user_msg = f" #{index + 1}{' ' * (4 - len(str(index + 1)))}" + \
-                   f"{user['name'].split('#')[0]}{' ' * (12 - len(user['name'].split('#')[0]))}" \
-                   f"{user['rank']['rank']}{' ' * (19 - len(user['rank']['rank']))}" \
-                   f"{round(user['rating'])}   \n"
-        body += user_msg
-    footer = f"   Page {leaderboard['meta']['current_page']}" \
-             f" of {leaderboard['meta']['last_page']} •" \
-             f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
-             f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
-    return header + body + footer
 
 
 def is_bot(user):
