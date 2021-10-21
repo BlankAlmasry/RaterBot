@@ -36,9 +36,7 @@ async def match(ctx):
             return
         if user.permissions_in(ctx.channel).administrator:
             winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
-            await message.delete()
-            msg = await create_match(winners, losers, ctx.guild.id)
-            await ctx.send(msg)
+            await execute_result(losers, winners)
         else:
             if user == bot.user:
                 return
@@ -47,12 +45,15 @@ async def match(ctx):
             is_efficient, winners, losers = await count_if_votes_efficient(left, right, first_team_players,
                                                                            second_team_players)
             if is_efficient:
-                await message.delete()
-                msg = await create_match(winners, losers, ctx.guild.id)
-                await ctx.send(msg)
+                await execute_result(losers, winners)
             else:
                 if not non_efficient_votes:
                     non_efficient_votes = await ctx.send('Admin or 75% of the players must agree on the match result ')
+
+    async def execute_result(losers, winners):
+        await message.delete()
+        msg = await create_match(winners, losers, ctx.guild.id)
+        await ctx.send(msg)
 
 
 async def force_admin_decision(reaction, first_team_players, second_team_players):
