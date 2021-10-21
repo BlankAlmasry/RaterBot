@@ -93,37 +93,30 @@ async def rankings(ctx):
 
 
 async def get_player_stats(player, guild_id):
-    user_stat = await get_user_stats_request(guild_id, player)
-    user_rank_on_the_server = await get_user_rank_request(guild_id, player)
-    player = user_stat.json()
-    player_rank = user_rank_on_the_server.json()
+    player_stats = await get_user_stats_request(guild_id, player)
+    player_rank = await get_user_rank_request(guild_id, player)
+
+    user_stats_message = await create_player_stat_response(player_stats, player_rank)
+    user_rank_message = await create_get_rank_response(player_rank)
+
+    return user_stats_message + user_rank_message
+
+
+async def create_player_stat_response(player, player_rank):
+    msg = f"`Rank: {player['rank']['rank']}`\n" \
+          f"`Rating: {int(player['rating'])}{'?' if player_rank['rank']['rank'] is None else ''}`\n" \
+          f"`Win/Loses: {player['wins']}/{player['loses']}`\n" \
+          f"`Win Ratio: {round((player['wins'] / (player['loses'] + player['wins'])) * 100, 2)}%`\n"
+    return msg
+
+
+async def create_get_rank_response(player_rank):
     msg_res1 = ""
     if not player_rank['rank']['rank'] is None:
         msg_res1 = f"`Leaderboard: {player_rank['rank']['rank']}th Over {player_rank['rank']['all']} players`"
     else:
         msg_res1 = "`Leaderboard: not enough games yet`"
-
-    msg = f"`Rank: {player['rank']['rank']}`\n" \
-          f"`Rating: {int(player['rating'])}{'?' if player_rank['rank']['rank'] is None else ''}`\n" \
-          f"`Win/Loses: {player['wins']}/{player['loses']}`\n" \
-          f"`Win Ratio: {round((player['wins'] / (player['loses'] + player['wins'])) * 100, 2)}%`\n" \
-          f"{msg_res1}"
-    return msg
-
-
-async def get_user_rank_request(guild_id, player):
-    return req.get(
-        RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=200",
-        headers=auth_headers
-    )
-
-
-async def get_user_stats_request(guild_id, player):
-    return req.get(
-        RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
-        headers=auth_headers
-    )
+    return msg_res1
 
 
 """
@@ -132,6 +125,22 @@ FUNCTIONS
 
 
 # TODO move functions to other files
+
+
+async def get_user_rank_request(guild_id, player):
+    return req.get(
+        RaterApi + "/games/" + str(
+            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=200",
+        headers=auth_headers
+    ).json()
+
+
+async def get_user_stats_request(guild_id, player):
+    return req.get(
+        RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
+        headers=auth_headers
+    ).json()
+
 
 async def fetch_user_who_got_mentions_or_message_author(message):
     mentions = message.mentions
