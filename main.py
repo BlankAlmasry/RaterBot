@@ -1,13 +1,11 @@
-from slugify import slugify
 from match import *
 from raterapi_requests import *
+
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
-RaterApi = "https://raterapi.azurewebsites.net/"
-auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
 
 @bot.event
@@ -124,8 +122,6 @@ async def create_get_rank_response(player_rank):
     return response
 
 
-
-
 async def fetch_user_who_got_mentions_or_message_author(message):
     mentions = message.mentions
     if len(mentions) > 1:  # a user got mentioned
@@ -143,7 +139,7 @@ async def create_match(winners, losers, guild_id):
 
 
 async def create_match_response(data):
-    data = dict(data.json())
+    data = dict(data)
     msg = "**New Ratings**\n"
     for user in data["users"]:
         user_mention = discord.utils.find(lambda n: str(n) == user["name"], bot.get_all_members())
@@ -151,7 +147,6 @@ async def create_match_response(data):
             "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
             round(user["rating"])) + "`\n"
     return msg
-
 
 
 async def start_voting(ctx):
@@ -232,7 +227,6 @@ async def create_leaderboard_response(author, leaderboard, rank):
              f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
              f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
     return header + body + footer
-
 
 
 def is_bot(user):

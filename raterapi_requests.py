@@ -23,12 +23,11 @@ async def get_user_rank_request(guild_id, player):
 
 
 async def create_match_request(guild_id, match_data):
-    res = req.post(
+    return req.post(
         RaterApi + "/games/" + str(guild_id) + "/matches",
         json=match_data,
         headers=auth_headers
-    )
-    return res
+    ).json()
 
 
 async def get_user_stats_request(guild_id, player):
