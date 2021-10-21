@@ -1,6 +1,7 @@
 from match import *
 from raterapi_requests import *
 from command_responses import *
+from helpers import *
 
 load_dotenv()
 
@@ -124,31 +125,8 @@ async def get_leaderboard(guild_id, author, page=1):
     return await create_leaderboard_response(author, leaderboard, rank_on_server)
 
 
-def is_bot(user):
-    return user == bot.user
-
-
-async def create_match_response(data):
-    msg = "**New Ratings**\n"
-    for user in data["users"]:
-        user_mention = await find_user(user["name"])
-        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
-            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
-            round(user["rating"])) + "`\n"
-    return msg
-
-
 async def find_user(name):
     return discord.utils.find(lambda n: str(n) == name, bot.get_all_members())
-
-
-async def fetch_user_who_got_mentions_or_message_author(message):
-    mentions = message.mentions
-    if len(mentions) > 1:  # a user got mentioned
-        player = mentions[1]
-    else:
-        player = message.author
-    return player
 
 
 bot.run(getenv("DISCORD_API"))
