@@ -1,4 +1,5 @@
 from match import *
+from rankings import get_leaderboard
 from raterapi_requests import *
 from command_responses import *
 from helpers import *
@@ -103,17 +104,6 @@ async def create_match(winners, losers, guild_id):
     res = await create_match_request(guild_id, new_match)
     msg = await create_match_response(res)
     return msg
-
-
-async def get_leaderboard(guild_id, author, page=1):
-    if page < 1:  # in case user asked for previous page when his is on the first page
-        page = 1
-    leaderboard = await get_leaderboard_request(guild_id, page)
-    # validate page exist
-    if not leaderboard["data"]:
-        return None
-    rank_on_server = (await get_user_rank_request(guild_id, author))["rank"]["rank"]
-    return await create_leaderboard_response(author, leaderboard, rank_on_server)
 
 
 async def find_user(name):
