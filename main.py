@@ -31,57 +31,63 @@ async def match(ctx):
     first_team_players, second_team_players = await fetch_first_and_second_team(ctx)
 
     @bot.event
-    async def on_reaction_add(reaction, user):
+    async def on_reaction_add(reaction, user, non_efficient_votes=None):
         if user == bot.user:
             return
         if user.permissions_in(ctx.channel).administrator:
-            await force_decision(reaction)
+            winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
+            await message.delete()
+            msg = await create_match(winners, losers, ctx.guild.id)
+            await ctx.send(msg)
         else:
             if user == bot.user:
                 return
-            all_players = (first_team_players + second_team_players)
             voting_pool = await ctx.fetch_message(message.id)
-            left, right = await vote(voting_pool, all_players)
-            await count_if_votes_efficient(left, right, all_players)
+            left, right = await vote(voting_pool, first_team_players, second_team_players)
+            is_efficient, winners, losers = await count_if_votes_efficient(left, right, first_team_players,
+                                                                           second_team_players)
+            if is_efficient:
+                await message.delete()
+                msg = await create_match(winners, losers, ctx.guild.id)
+                await ctx.send(msg)
+            else:
+                if not non_efficient_votes:
+                    non_efficient_votes = await ctx.send('Admin or 75% of the players must agree on the match result ')
 
-    async def count_if_votes_efficient(left, right, all_players):
-        if len(left) >= 0.75 * len(all_players):
-            await message.delete()
-            msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
-            await ctx.send(msg)
-        elif len(right) >= 0.75 * len(all_players):
-            await message.delete()
-            msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
-            await ctx.send(msg)
-        else:
-            if len(left) == 1 or len(right) == 1:
-                await ctx.send('The winner must be agreed upon by 75% or more of the players')
 
-    async def vote(voting_pool, all_players):
-        left = set()
-        right = set()
-        for reaction in voting_pool.reactions:
-            if reaction.emoji == "⬅":
-                async for user in reaction.users():
-                    if user != bot.user and \
-                            user.name + "#" + user.discriminator in all_players:
-                        left.add(user)
-            if reaction.emoji == "➡":
-                async for user in reaction.users():
-                    if user != bot.user and \
-                            user.name + "#" + user.discriminator in all_players:
-                        right.add(user)
-        return tuple(left), tuple(right)
+async def force_admin_decision(reaction, first_team_players, second_team_players):
+    if str(reaction.emoji) == "⬅":
+        return first_team_players, second_team_players
+    if str(reaction.emoji) == "➡":
+        return second_team_players, first_team_players
 
-    async def force_decision(reaction):
-        if str(reaction.emoji) == "⬅":
-            await message.delete()
-            msg = await create_match(first_team_players, second_team_players, ctx.guild.id)
-            await ctx.send(msg)
-        if str(reaction.emoji) == "➡":
-            await message.delete()
-            msg = await create_match(second_team_players, first_team_players, ctx.guild.id)
-            await ctx.send(msg)
+
+async def count_if_votes_efficient(left, right, first_team_players, second_team_players):
+    all_players = (first_team_players + second_team_players)
+    if len(left) >= 0.75 * len(all_players):
+        return True, first_team_players, second_team_players
+    elif len(right) >= 0.75 * len(all_players):
+        return True, second_team_players, first_team_players
+    else:
+        return False, None, None
+
+
+async def vote(voting_pool, first_team_players, second_team_players):
+    all_players = (first_team_players + second_team_players)
+    left = set()
+    right = set()
+    for reaction in voting_pool.reactions:
+        if reaction.emoji == "⬅":
+            async for user in reaction.users():
+                if user != bot.user and \
+                        user.name + "#" + user.discriminator in all_players:
+                    left.add(user)
+        if reaction.emoji == "➡":
+            async for user in reaction.users():
+                if user != bot.user and \
+                        user.name + "#" + user.discriminator in all_players:
+                    right.add(user)
+    return tuple(left), tuple(right)
 
 
 async def get_player_stats(message, guild_id, ctx):
