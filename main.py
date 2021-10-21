@@ -56,7 +56,7 @@ async def match(ctx):
         await ctx.send(msg)
 
 
-@bot.command(pass_context=True, aliases=['stat:', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
+@bot.command(pass_context=True, aliases=['stat', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stats(ctx):
     player = await fetch_user_who_got_mentions_or_message_author(ctx.message)
@@ -79,7 +79,7 @@ async def rankings(ctx):
     await message.add_reaction("⬅")
     await message.add_reaction("➡")
 
-    @bot.event
+    @bot.event0
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
