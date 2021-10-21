@@ -73,23 +73,20 @@ async def rankings(ctx):
     page = 1
     leaderboard = await get_leaderboard(ctx.guild.id, ctx.message.author)
     if leaderboard is None:
-        message = await ctx.send("not enough games played in the server yet")
+        await ctx.send("not enough games played in the server yet")
     else:
         message = await ctx.send(leaderboard)
-    await message.add_reaction("⬅")
-    await message.add_reaction("➡")
+        await message.add_reaction("⬅")
+        await message.add_reaction("➡")
 
     @bot.event
     async def on_reaction_add(reaction, user):
-        if user == bot.user:
+        if user == bot.user or message is None:
             return
-        if message is None:
-            return
-        if user.permissions_in(ctx.channel).administrator:
-            if str(reaction.emoji) == "⬅":
-                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
-            if str(reaction.emoji) == "➡":
-                await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
+        if str(reaction.emoji) == "⬅":
+            await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
+        if str(reaction.emoji) == "➡":
+            await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
 
 
 """
