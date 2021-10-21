@@ -71,15 +71,15 @@ async def stats(ctx):
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def rankings(ctx):
     page = 1
-    message = await get_leaderboard(ctx.guild.id, ctx.message.author)
-    if message is None:
-        await ctx.send("not enough games played in the server yet")
+    leaderboard = await get_leaderboard(ctx.guild.id, ctx.message.author)
+    if leaderboard is None:
+        message = await ctx.send("not enough games played in the server yet")
     else:
-        await ctx.send(message)
+        message = await ctx.send(leaderboard)
     await message.add_reaction("⬅")
     await message.add_reaction("➡")
 
-    @bot.event0
+    @bot.event
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
@@ -90,6 +90,14 @@ async def rankings(ctx):
                 await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
             if str(reaction.emoji) == "➡":
                 await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
+
+
+"""
+FUNCTIONS
+"""
+
+
+# TODO move functions to other files
 
 
 async def get_player_stats(player, guild_id):
@@ -117,14 +125,6 @@ async def create_get_rank_response(player_rank):
     else:
         msg_res1 = "`Leaderboard: not enough games yet`"
     return msg_res1
-
-
-"""
-FUNCTIONS
-"""
-
-
-# TODO move functions to other files
 
 
 async def get_user_rank_request(guild_id, player):
