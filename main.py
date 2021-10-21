@@ -93,18 +93,10 @@ async def rankings(ctx):
 
 
 async def get_player_stats(player, guild_id):
-    res = req.get(
-        RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
-        headers=auth_headers
-    )
-
-    res1 = req.get(
-        RaterApi + "/games/" + str(
-            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=200",
-        headers=auth_headers
-    )
-    player = res.json()
-    player_rank = res1.json()
+    user_stat = await get_user_stats_request(guild_id, player)
+    user_rank_on_the_server = await get_user_rank_request(guild_id, player)
+    player = user_stat.json()
+    player_rank = user_rank_on_the_server.json()
     msg_res1 = ""
     if not player_rank['rank']['rank'] is None:
         msg_res1 = f"`Leaderboard: {player_rank['rank']['rank']}th Over {player_rank['rank']['all']} players`"
@@ -117,6 +109,21 @@ async def get_player_stats(player, guild_id):
           f"`Win Ratio: {round((player['wins'] / (player['loses'] + player['wins'])) * 100, 2)}%`\n" \
           f"{msg_res1}"
     return msg
+
+
+async def get_user_rank_request(guild_id, player):
+    return req.get(
+        RaterApi + "/games/" + str(
+            guild_id) + "/ranking/" + slugify(player.name) + player.discriminator + "?maxRatingDeviation=200",
+        headers=auth_headers
+    )
+
+
+async def get_user_stats_request(guild_id, player):
+    return req.get(
+        RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
+        headers=auth_headers
+    )
 
 
 """
