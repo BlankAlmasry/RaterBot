@@ -59,7 +59,8 @@ async def match(ctx):
 @bot.command(pass_context=True, aliases=['stat:', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stats(ctx):
-    msg = await get_player_stats(ctx.message, ctx.guild.id)
+    player = await fetch_user_who_got_mentions_or_message_author(ctx.message)
+    msg = await get_player_stats(player, ctx.guild.id)
     await ctx.send(msg)
 
 
@@ -91,8 +92,7 @@ async def rankings(ctx):
                 await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
 
 
-async def get_player_stats(message, guild_id):
-    player = await fetch_user_who_got_mentions_or_message_author(message)
+async def get_player_stats(player, guild_id):
     res = req.get(
         RaterApi + "/games/" + str(guild_id) + "/users/" + slugify(player.name) + player.discriminator,
         headers=auth_headers
