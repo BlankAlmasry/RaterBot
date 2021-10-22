@@ -1,7 +1,7 @@
 from match import *
 from rankings import paginate_rankings, get_rankings
 from raterapi_requests import *
-from command_responses import *
+from responses import *
 from helpers import *
 from stats import *
 from vote import *

@@ -1,4 +1,4 @@
-from command_responses import create_leaderboard_response
+from responses import create_leaderboard_response
 from raterapi_requests import get_leaderboard_request, get_user_rank_request
 
 

@@ -2,7 +2,7 @@ from collections import namedtuple
 import discord
 from discord.ext import commands
 
-from command_responses import create_match_response
+from responses import create_match_response
 from raterapi_requests import create_match_request
 import vote
 
