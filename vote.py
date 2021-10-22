@@ -1,12 +1,38 @@
 import discord
 from discord.ext import commands
 
+import match
+
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
 
-async def vote(voting_pool, first_team_players, second_team_players):
+async def vote(message, first_team_players, second_team_players,
+               ctx, reaction, user):
+    non_efficient_votes_response = None
+    if user.permissions_in(ctx.channel).administrator:
+        winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
+        await match.execute_result(ctx, message, losers, winners)
+    else:
+        voting_pool = await ctx.fetch_message(message.id)
+        first_team_won_voters, second_team_won_voters = await create_voting_pool(voting_pool,
+                                                                                 first_team_players,
+                                                                                 second_team_players)
+        is_efficient, winners, losers = await count_if_votes_efficient(first_team_won_voters,
+                                                                       second_team_won_voters,
+                                                                       first_team_players,
+                                                                       second_team_players)
+        if is_efficient:
+            await match.execute_result(ctx, message, losers, winners)
+        else:
+            if non_efficient_votes_response is None:
+                non_efficient_votes_response = await ctx.send(
+                    'Admin or 75% of the players must agree on the match result '
+                )
+
+
+async def create_voting_pool(voting_pool, first_team_players, second_team_players):
     all_players = (first_team_players + second_team_players)
     left = set()
     right = set()

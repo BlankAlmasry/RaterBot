@@ -1,4 +1,5 @@
 from command_responses import create_player_stat_response, create_get_rank_response
+from helpers import fetch_user_who_got_mentions_or_message_author
 from raterapi_requests import get_user_stats_request, get_user_rank_request
 
 
@@ -11,3 +12,8 @@ async def get_player_stats(player, guild_id):
 
     return user_stats_message + user_rank_message
 
+
+async def get_stats(ctx):
+    player = await fetch_user_who_got_mentions_or_message_author(ctx.message)
+    msg = await get_player_stats(player, ctx.guild.id)
+    await ctx.send(msg)
