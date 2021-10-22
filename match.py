@@ -11,7 +11,7 @@ intents.members = True
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
 
-# TODO move functions to other files
+# TODO Refactor
 
 
 async def make_match(ctx):

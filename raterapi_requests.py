@@ -1,15 +1,10 @@
 from os import getenv
-import discord
 from dotenv import load_dotenv
-from discord.ext import commands
 import requests as req
 from slugify import slugify
 
 load_dotenv()
 
-intents = discord.Intents.default()
-intents.members = True
-bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 RaterApi = "https://raterapi.azurewebsites.net/"
 auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
