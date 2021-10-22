@@ -9,10 +9,6 @@ async def find_user(name, users):
     return discord.utils.find(lambda n: str(n) == name, users)
 
 
-def is_bot(user):
-    return user == bot.user
-
-
 async def fetch_user_who_got_mentions_or_message_author(message):
     mentions = message.mentions
     if len(mentions) > 1:  # a user got mentioned

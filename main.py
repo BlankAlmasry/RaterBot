@@ -33,24 +33,26 @@ async def match(ctx):
     first_team_players, second_team_players = await fetch_first_and_second_team(ctx)
 
     @bot.event
-    async def on_reaction_add(reaction, user, non_efficient_votes=None):
-        if is_bot(user):
+    async def on_reaction_add(reaction, user, non_efficient_votes_response=None):
+        if user == bot.user:
             return
         if user.permissions_in(ctx.channel).administrator:
             winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
             await execute_result(losers, winners)
         else:
-            if is_bot(user):
-                return
             voting_pool = await ctx.fetch_message(message.id)
-            left, right = await vote(voting_pool, first_team_players, second_team_players)
-            is_efficient, winners, losers = await count_if_votes_efficient(left, right, first_team_players,
+            first_team_won_voters, second_team_won_voters = await vote(voting_pool,
+                                                                       first_team_players,
+                                                                       second_team_players)
+            is_efficient, winners, losers = await count_if_votes_efficient(first_team_won_voters,
+                                                                           second_team_won_voters,
+                                                                           first_team_players,
                                                                            second_team_players)
             if is_efficient:
                 await execute_result(losers, winners)
             else:
-                if not non_efficient_votes:
-                    non_efficient_votes = await ctx.send('Admin or 75% of the players must agree on the match result ')
+                if non_efficient_votes_response is None:
+                    non_efficient_votes_response = await ctx.send('Admin or 75% of the players must agree on the match result ')
 
     async def execute_result(losers, winners):
         await message.delete()
