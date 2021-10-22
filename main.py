@@ -4,8 +4,7 @@ from raterapi_requests import *
 from command_responses import *
 from helpers import *
 from stats import *
-
-load_dotenv()
+from vote import count_if_votes_efficient, vote, force_admin_decision
 
 intents = discord.Intents.default()
 intents.members = True
@@ -27,7 +26,7 @@ async def on_guild_remove(guild):
 async def match(ctx):
     try:
         message, first_team_players, second_team_players = await make_match(ctx)
-    except ValueError:
+    except ValueError:  # command validation failed
         return
 
     @bot.event
@@ -61,16 +60,6 @@ async def match(ctx):
         await message.delete()
         msg = await create_match(winners, losers, ctx.guild.id, ctx.guild.members)
         await ctx.send(msg)
-
-
-async def make_match(ctx):
-    error_msg = validate_teams(ctx.message)
-    if error_msg:
-        await ctx.send(error_msg)
-        raise ValueError
-    message = await start_voting(ctx)
-    first_team_players, second_team_players = await fetch_first_and_second_team(ctx)
-    return message, first_team_players, second_team_players
 
 
 @bot.command(pass_context=True, aliases=['stat', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
