@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+from helpers import find_user
+
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
@@ -37,3 +39,13 @@ async def create_leaderboard_response(author, leaderboard, rank):
              f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
              f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
     return header + body + footer
+
+
+async def create_match_response(data, users):
+    msg = "**New Ratings**\n"
+    for user in data["users"]:
+        user_mention = await find_user(user["name"], users)
+        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
+            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
+            round(user["rating"])) + "`\n"
+    return msg

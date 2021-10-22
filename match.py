@@ -4,7 +4,7 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 
-from helpers import find_user
+from command_responses import create_match_response
 from raterapi_requests import create_match_request
 
 load_dotenv()
@@ -22,16 +22,6 @@ async def create_match(winners, losers, guild_id, users):
     new_match = await match_factory(winners, losers)
     res = await create_match_request(guild_id, new_match)
     msg = await create_match_response(res, users)
-    return msg
-
-
-async def create_match_response(data, users):
-    msg = "**New Ratings**\n"
-    for user in data["users"]:
-        user_mention = await find_user(user["name"], users)
-        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
-            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
-            round(user["rating"])) + "`\n"
     return msg
 
 
