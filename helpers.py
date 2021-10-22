@@ -5,6 +5,10 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
 
+async def find_user(name, users):
+    return discord.utils.find(lambda n: str(n) == name, users)
+
+
 def is_bot(user):
     return user == bot.user
 

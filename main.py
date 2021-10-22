@@ -54,7 +54,7 @@ async def match(ctx):
 
     async def execute_result(losers, winners):
         await message.delete()
-        msg = await create_match(winners, losers, ctx.guild.id)
+        msg = await create_match(winners, losers, ctx.guild.id, ctx.guild.members)
         await ctx.send(msg)
 
 
@@ -89,35 +89,6 @@ async def rankings(ctx):
             await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
         if str(reaction.emoji) == "➡":
             await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page + 1))
-
-
-"""
-FUNCTIONS
-"""
-
-
-# TODO move functions to other files
-
-
-async def create_match(winners, losers, guild_id):
-    new_match = await match_factory(winners, losers)
-    res = await create_match_request(guild_id, new_match)
-    msg = await create_match_response(res)
-    return msg
-
-
-async def create_match_response(data):
-    msg = "**New Ratings**\n"
-    for user in data["users"]:
-        user_mention = await find_user(user["name"])
-        msg += f"{user_mention.mention}" + "\n" + "`Rank : " + user["rank"][
-            "rank"] + " " + str(round(user["rank"]["points"])) + " LP" + "\n" + "Rating : " + str(
-            round(user["rating"])) + "`\n"
-    return msg
-
-
-async def find_user(name):
-    return discord.utils.find(lambda n: str(n) == name, bot.get_all_members())
 
 
 bot.run(getenv("DISCORD_API"))
