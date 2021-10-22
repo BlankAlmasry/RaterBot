@@ -25,17 +25,18 @@ async def on_guild_remove(guild):
 @bot.command(pass_context=True, aliases=["rate", "play", "team", 'fight'])
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
-    error_msg = validate_teams(ctx.message)
-    if error_msg:
-        await ctx.send(error_msg)
+    try:
+        message, first_team_players, second_team_players = await make_match(ctx)
+    except ValueError:
         return
-    message = await start_voting(ctx)
-    first_team_players, second_team_players = await fetch_first_and_second_team(ctx)
 
     @bot.event
     async def on_reaction_add(reaction, user, non_efficient_votes_response=None):
         if user == bot.user:
             return
+        await create_voting_pool(reaction, user, non_efficient_votes_response)
+
+    async def create_voting_pool(reaction, user, non_efficient_votes_response):
         if user.permissions_in(ctx.channel).administrator:
             winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
             await execute_result(losers, winners)
@@ -52,12 +53,24 @@ async def match(ctx):
                 await execute_result(losers, winners)
             else:
                 if non_efficient_votes_response is None:
-                    non_efficient_votes_response = await ctx.send('Admin or 75% of the players must agree on the match result ')
+                    non_efficient_votes_response = await ctx.send(
+                        'Admin or 75% of the players must agree on the match result '
+                    )
 
     async def execute_result(losers, winners):
         await message.delete()
         msg = await create_match(winners, losers, ctx.guild.id, ctx.guild.members)
         await ctx.send(msg)
+
+
+async def make_match(ctx):
+    error_msg = validate_teams(ctx.message)
+    if error_msg:
+        await ctx.send(error_msg)
+        raise ValueError
+    message = await start_voting(ctx)
+    first_team_players, second_team_players = await fetch_first_and_second_team(ctx)
+    return message, first_team_players, second_team_players
 
 
 @bot.command(pass_context=True, aliases=['stat', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
