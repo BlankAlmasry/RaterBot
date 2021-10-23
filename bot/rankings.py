@@ -1,5 +1,5 @@
-from responses import create_leaderboard_response
-from raterapi_requests import get_leaderboard_request, get_user_rank_request
+from bot.responses import create_leaderboard_response
+from bot.raterapi_requests import get_leaderboard_request, get_user_rank_request
 
 
 async def get_rankings(ctx):

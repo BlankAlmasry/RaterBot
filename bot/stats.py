@@ -1,6 +1,6 @@
-from responses import create_player_stat_response, create_get_rank_response
-from helpers import fetch_user_who_got_mentions_or_message_author
-from raterapi_requests import get_user_stats_request, get_user_rank_request
+from bot.responses import create_player_stat_response, create_get_rank_response
+from bot.helpers import fetch_user_who_got_mentions_or_message_author
+from bot.raterapi_requests import get_user_stats_request, get_user_rank_request
 
 
 async def get_player_stats(player, guild_id):

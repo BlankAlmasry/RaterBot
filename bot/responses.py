@@ -1,12 +1,13 @@
 import discord
 from discord.ext import commands
 
-from helpers import find_user
+from bot.helpers import find_user
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
 
+# ALL RESPONSES was created with a series of trial and error, was the sole purpose of it looking good on discord
 async def create_player_stat_response(player, player_rank):
     msg = f"`Rank: {player['rank']['rank']}`\n" \
           f"`Rating: {int(player['rating'])}{'?' if player_rank['rank']['rank'] is None else ''}`\n" \
@@ -34,10 +35,13 @@ async def create_leaderboard_response(author, leaderboard, rank):
                    f"{user['rank']['rank']}{' ' * (19 - len(user['rank']['rank']))}" \
                    f"{round(user['rating'])}   \n"
         body += user_msg
+    footer_last_line = (13 - len(author.name)
+                        - len(str(leaderboard['meta']['current_page'])) -
+                        len(str(leaderboard['meta']['current_page'])))
     footer = f"   Page {leaderboard['meta']['current_page']}" \
              f" of {leaderboard['meta']['last_page']} •" \
              f" Your Rank: {rank if rank is not None else '?'} •  {author.name}" \
-             f"{' ' * (13 - len(author.name) - len(str(leaderboard['meta']['current_page'])) - len(str(leaderboard['meta']['current_page'])))}`"
+             f"{' ' * footer_last_line}`"
     return header + body + footer
 
 

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-import match
+import bot.match as match
 
 intents = discord.Intents.default()
 intents.members = True

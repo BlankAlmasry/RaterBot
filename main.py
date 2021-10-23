@@ -1,10 +1,10 @@
-from match import *
-from rankings import paginate_rankings, get_rankings
-from raterapi_requests import *
-from responses import *
-from helpers import *
-from stats import *
-from vote import *
+from bot.match import *
+from bot.rankings import paginate_rankings, get_rankings
+from bot.raterapi_requests import *
+from bot.responses import *
+from bot.helpers import *
+from bot.stats import *
+from bot.vote import *
 
 intents = discord.Intents.default()
 intents.members = True
