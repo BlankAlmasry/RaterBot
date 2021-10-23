@@ -4,7 +4,7 @@ from bot.raterapi_requests import create_match_request
 from bot.responses import create_match_response
 
 
-async def create_match(winners, losers, guild_id, users):
+async def match_factory(winners, losers, guild_id, users):
     match = await match_object_factory(winners, losers)
     res = await create_match_request(guild_id, match._asdict())
     match_response = await create_match_response(res, users)
