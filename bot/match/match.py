@@ -1,4 +1,5 @@
 from collections import namedtuple
+from bot.match.make_match_validation import validate_teams
 from bot.responses import create_match_response
 from bot.raterapi_requests import create_match_request
 import bot.vote as vote
@@ -33,25 +34,9 @@ async def match_factory(winners, losers):
     return match_data._asdict()
 
 
-def validate_teams(message):
-    if len(message.mentions) == 1:
-        # only the bot got mentions
-        return "mentions the players and separate between them with `vs` according to their tea,"
-
-    if len(message.mentions) == 2:
-        # only 1 player
-        return "mention both opponent in same line please, and separate them with `vs` "
-
-    if "vs" not in message.content:
-        return "separate the 2 teams with `vs` in between"
-
-    # Lazy validation, would fix an early `vs` or a late one by auto-balancing teams
-    if (len(message.mentions) - 1) % 2 != 0:
-        return "uneven teams"
-
-
 async def match_voting_pool_handler(message, first_team_players, second_team_players,
                                     ctx, reaction, user):
+    # Match module have control over Vote module
     await vote.vote(message, first_team_players, second_team_players,
                     ctx, reaction, user)
 
