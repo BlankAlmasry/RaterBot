@@ -13,29 +13,24 @@ async def start_voting(ctx):
 
 async def vote(message, first_team_players, second_team_players,
                ctx, reaction, user):
-    non_efficient_votes_response = None
+    # if admin voted, force his vote to be the winner
     if user.permissions_in(ctx.channel).administrator:
-        winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
+        winners, losers = await get_admin_decision(reaction, first_team_players, second_team_players)
         await match_facade.execute_result(ctx, message, losers, winners)
     else:
         voting_pool = await ctx.fetch_message(message.id)
-        first_team_won_voters, second_team_won_voters = await create_voting_pool(voting_pool,
-                                                                                 first_team_players,
-                                                                                 second_team_players)
-        is_efficient, winners, losers = await count_if_votes_efficient(first_team_won_voters,
-                                                                       second_team_won_voters,
-                                                                       first_team_players,
-                                                                       second_team_players)
+        first_team_won_voters, second_team_won_voters = await count_votes(voting_pool,
+                                                                          first_team_players,
+                                                                          second_team_players)
+        is_efficient, winners, losers = await count_if_votes_efficient_to_decide_the_result(first_team_won_voters,
+                                                                                            second_team_won_voters,
+                                                                                            first_team_players,
+                                                                                            second_team_players)
         if is_efficient:
             await match_facade.execute_result(ctx, message, losers, winners)
-        else:
-            if non_efficient_votes_response is None:
-                non_efficient_votes_response = await ctx.send(
-                    'Admin or 75% of the players must agree on the match result '
-                )
 
 
-async def create_voting_pool(voting_pool, first_team_players, second_team_players):
+async def count_votes(voting_pool, first_team_players, second_team_players):
     all_players = (first_team_players + second_team_players)
     left = set()
     right = set()
@@ -53,7 +48,7 @@ async def create_voting_pool(voting_pool, first_team_players, second_team_player
     return tuple(left), tuple(right)
 
 
-async def count_if_votes_efficient(left, right, first_team_players, second_team_players):
+async def count_if_votes_efficient_to_decide_the_result(left, right, first_team_players, second_team_players):
     all_players = (first_team_players + second_team_players)
     if len(left) >= 0.75 * len(all_players):
         return True, first_team_players, second_team_players
@@ -63,7 +58,7 @@ async def count_if_votes_efficient(left, right, first_team_players, second_team_
         return False, None, None
 
 
-async def force_admin_decision(reaction, first_team_players, second_team_players):
+async def get_admin_decision(reaction, first_team_players, second_team_players):
     if str(reaction.emoji) == "⬅":
         return first_team_players, second_team_players
     if str(reaction.emoji) == "➡":
