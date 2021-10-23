@@ -1,6 +1,6 @@
 from bot.match.helpers import fetch_first_and_second_team
 from bot.match.make_match_validation import validate_teams
-import bot.vote as vote
+import bot.match.vote.vote as vote
 
 
 async def make_match(ctx):

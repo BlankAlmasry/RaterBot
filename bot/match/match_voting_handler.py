@@ -1,4 +1,4 @@
-import bot.vote as vote
+import bot.match.vote.vote as vote
 
 
 async def match_voting_pool_handler(message, first_team_players, second_team_players,
