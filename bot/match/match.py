@@ -1,7 +1,6 @@
 from bot.match.make_match_validation import validate_teams
 import bot.vote as vote
 
-
 # TODO Refactor
 from bot.match.match_factory import create_match
 
@@ -22,13 +21,6 @@ async def execute_result(ctx, voting_pool, losers, winners):
     await voting_pool.delete()
     msg = await create_match(winners, losers, ctx.guild.id, ctx.guild.members)
     await ctx.send(msg)
-
-
-async def match_voting_pool_handler(message, first_team_players, second_team_players,
-                                    ctx, reaction, user):
-    # Match module have control over Vote module
-    await vote.vote(message, first_team_players, second_team_players,
-                    ctx, reaction, user)
 
 
 async def fetch_first_and_second_team(message):

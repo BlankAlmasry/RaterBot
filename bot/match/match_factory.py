@@ -5,13 +5,13 @@ from bot.responses import create_match_response
 
 
 async def create_match(winners, losers, guild_id, users):
-    match = await match_factory(winners, losers)
+    match = await match_object_factory(winners, losers)
     res = await create_match_request(guild_id, match._asdict())
     match_response = await create_match_response(res, users)
     return match_response
 
 
-async def match_factory(winners, losers) -> namedtuple:
+async def match_object_factory(winners, losers) -> namedtuple:
     Match = namedtuple("Match", "teams")
     match_data = Match([
         {"users": winners, "result": 1},
