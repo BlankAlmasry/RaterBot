@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
 
-import bot.match.match as match
-
+import bot.match.match_facade as match_facade
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
@@ -13,7 +12,7 @@ async def vote(message, first_team_players, second_team_players,
     non_efficient_votes_response = None
     if user.permissions_in(ctx.channel).administrator:
         winners, losers = await force_admin_decision(reaction, first_team_players, second_team_players)
-        await match.execute_result(ctx, message, losers, winners)
+        await match_facade.execute_result(ctx, message, losers, winners)
     else:
         voting_pool = await ctx.fetch_message(message.id)
         first_team_won_voters, second_team_won_voters = await create_voting_pool(voting_pool,
@@ -24,7 +23,7 @@ async def vote(message, first_team_players, second_team_players,
                                                                        first_team_players,
                                                                        second_team_players)
         if is_efficient:
-            await match.execute_result(ctx, message, losers, winners)
+            await match_facade.execute_result(ctx, message, losers, winners)
         else:
             if non_efficient_votes_response is None:
                 non_efficient_votes_response = await ctx.send(
