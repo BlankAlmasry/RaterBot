@@ -1,10 +1,4 @@
-import discord
-from discord.ext import commands
-
 from bot.helpers import find_user
-
-intents = discord.Intents.default()
-bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
 
 # ALL RESPONSES was created with a series of trial and error, was the sole purpose of it looking good on discord
