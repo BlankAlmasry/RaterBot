@@ -1,4 +1,4 @@
-from bot.leaderboard import paginate_leaderboard, get_rankings
+from bot.leaderboard import print_leaderboard, try_paginate_leaderboard
 from bot.raterapi_requests import *
 from bot.responses import *
 from bot.helpers import *
@@ -49,13 +49,13 @@ async def stats(ctx):
              'leader', 'lvls', 'Ranking', 'Top', 'best', 'rankings'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def leaderboard(ctx):
-    page, message = await get_rankings(ctx)
+    current_page, leaderboard_message = await print_leaderboard(ctx)
 
     @bot.event
     async def on_reaction_add(reaction, user):
-        if user == bot.user or message is None:
+        if user == bot.user or leaderboard_message is None:
             return
-        await paginate_leaderboard(ctx, reaction, message, page)
+        await try_paginate_leaderboard(ctx, reaction, leaderboard_message, current_page)
 
 
 bot.run(getenv("DISCORD_API"))
