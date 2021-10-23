@@ -1,4 +1,4 @@
-from bot.match import *
+from bot.match.match import *
 from bot.rankings import paginate_rankings, get_rankings
 from bot.raterapi_requests import *
 from bot.responses import *
