@@ -1,10 +1,14 @@
-import discord
 from discord.ext import commands
-
 import bot.match.match_facade as match_facade
-intents = discord.Intents.default()
-intents.members = True
-bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
+
+bot = commands.Bot(command_prefix=commands.when_mentioned)
+
+
+async def start_voting(ctx):
+    message = await ctx.send('Which team won?')
+    await message.add_reaction("⬅")
+    await message.add_reaction("➡")
+    return message
 
 
 async def vote(message, first_team_players, second_team_players,
@@ -47,13 +51,6 @@ async def create_voting_pool(voting_pool, first_team_players, second_team_player
                         user.name + "#" + user.discriminator in all_players:
                     right.add(user)
     return tuple(left), tuple(right)
-
-
-async def start_voting(ctx):
-    message = await ctx.send('Which team won?')
-    await message.add_reaction("⬅")
-    await message.add_reaction("➡")
-    return message
 
 
 async def count_if_votes_efficient(left, right, first_team_players, second_team_players):

@@ -9,6 +9,8 @@ RaterApi = "https://raterapi.azurewebsites.net/"
 auth_headers = {"Authorization": "Bearer " + getenv('RATER_API')}
 
 
+# RaterApi is the api that we get everything from. no attention to build a room for extension or change
+
 async def get_user_rank_request(guild_id, player):
     return req.get(
         RaterApi + "/games/" + str(
