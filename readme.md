@@ -45,7 +45,7 @@ example:
 ##  leaderboard
 
     @RaterBot leaderboard
-it will paginated ranking of the users based on their rating/rank from top to bottom.
+it will paginate ranking of the users based on their rating/rank from top to bottom.
 users can paginate the list by simply pressing the already existing emotes of ⬅➡ arrows.
 example:
  @RaterBot leaderboard
