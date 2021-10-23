@@ -1,4 +1,4 @@
-from bot.leaderboard import print_leaderboard, try_paginate_leaderboard
+from bot.leaderboard.leaderboard import print_leaderboard, try_paginate_leaderboard
 from bot.raterapi_requests import *
 from bot.responses import *
 from bot.helpers import *
@@ -55,6 +55,7 @@ async def leaderboard(ctx):
     async def on_reaction_add(reaction, user):
         if user == bot.user or leaderboard_message is None:
             return
+        # will paginate if user reacted with pagination arrows
         await try_paginate_leaderboard(ctx, reaction, leaderboard_message, current_page)
 
 
