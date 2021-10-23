@@ -1,11 +1,9 @@
-from collections import namedtuple
 from bot.match.make_match_validation import validate_teams
-from bot.responses import create_match_response
-from bot.raterapi_requests import create_match_request
 import bot.vote as vote
 
 
 # TODO Refactor
+from bot.match.match_factory import create_match
 
 
 async def make_match(ctx):
@@ -24,22 +22,6 @@ async def execute_result(ctx, voting_pool, losers, winners):
     await voting_pool.delete()
     msg = await create_match(winners, losers, ctx.guild.id, ctx.guild.members)
     await ctx.send(msg)
-
-
-async def create_match(winners, losers, guild_id, users):
-    match = await match_factory(winners, losers)
-    res = await create_match_request(guild_id, match._asdict())
-    match_response = await create_match_response(res, users)
-    return match_response
-
-
-async def match_factory(winners, losers) -> namedtuple:
-    Match = namedtuple("Match", "teams")
-    match_data = Match([
-        {"users": winners, "result": 1},
-        {"users": losers, "result": 0}
-    ])
-    return match_data
 
 
 async def match_voting_pool_handler(message, first_team_players, second_team_players,
