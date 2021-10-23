@@ -1,12 +1,8 @@
-import discord
-from discord.ext import commands
-
-intents = discord.Intents.default()
-bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
+from discord.utils import find
 
 
 async def find_user(name, users):
-    return discord.utils.find(lambda n: str(n) == name, users)
+    return find(lambda n: str(n) == name, users)
 
 
 async def fetch_user_who_got_mentions_or_message_author(message):
