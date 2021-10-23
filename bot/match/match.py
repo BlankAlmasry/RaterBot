@@ -1,14 +1,7 @@
 from collections import namedtuple
-import discord
-from discord.ext import commands
-
 from bot.responses import create_match_response
 from bot.raterapi_requests import create_match_request
 import bot.vote as vote
-
-intents = discord.Intents.default()
-intents.members = True
-bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
 
 
 # TODO Refactor
