@@ -1,6 +1,6 @@
 from bot.leaderboard.leaderboard_facade import print_leaderboard, try_paginate_leaderboard
 from bot.raterapi_requests import *
-from bot.stats.stats import get_stats
+from bot.stats.stats_facade import print_stats
 from bot.vote import *
 from bot.match.match_facade import *
 
@@ -39,7 +39,7 @@ async def match(ctx):
 @bot.command(pass_context=True, aliases=['stat', 'level', 'rank', 'Rank', 'Stat', 'Level', 'lvl'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def stats(ctx):
-    await get_stats(ctx)
+    await print_stats(ctx)
 
 
 @bot.command(
