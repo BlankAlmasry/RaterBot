@@ -9,6 +9,7 @@ import bot.vote as vote
 
 
 async def make_match(ctx):
+    # stage 1, won't persist match creation until it get permitted through votes or admin approval
     error_msg = validate_teams(ctx.message)
     if error_msg:
         await ctx.send(error_msg)
@@ -18,11 +19,18 @@ async def make_match(ctx):
     return voting_pool, first_team_players, second_team_players
 
 
+async def execute_result(ctx, voting_pool, losers, winners):
+    # stage 2, Will persist it now
+    await voting_pool.delete()
+    msg = await create_match(winners, losers, ctx.guild.id, ctx.guild.members)
+    await ctx.send(msg)
+
+
 async def create_match(winners, losers, guild_id, users):
-    new_match = await match_factory(winners, losers)
-    res = await create_match_request(guild_id, new_match)
-    msg = await create_match_response(res, users)
-    return msg
+    match = await match_factory(winners, losers)
+    res = await create_match_request(guild_id, match)
+    match_response = await create_match_response(res, users)
+    return match_response
 
 
 async def match_factory(winners, losers):
@@ -48,9 +56,3 @@ async def fetch_first_and_second_team(message):
     first_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
     second_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
     return first_team_players, second_team_players
-
-
-async def execute_result(ctx, message, losers, winners):
-    await message.delete()
-    msg = await create_match(winners, losers, ctx.guild.id, ctx.guild.members)
-    await ctx.send(msg)
