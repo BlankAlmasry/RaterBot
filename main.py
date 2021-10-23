@@ -1,7 +1,6 @@
-from bot.leaderboard.leaderboard import print_leaderboard, try_paginate_leaderboard
+from bot.leaderboard.leaderboard import try_paginate_leaderboard, get_leaderboard
 from bot.raterapi_requests import *
 from bot.responses import *
-from bot.helpers import *
 from bot.stats import *
 from bot.vote import *
 from bot.match.match_facade import *
@@ -49,7 +48,7 @@ async def stats(ctx):
              'leader', 'lvls', 'Ranking', 'Top', 'best', 'rankings'])
 @commands.cooldown(2, 1, commands.BucketType.guild)
 async def leaderboard(ctx):
-    current_page, leaderboard_message = await print_leaderboard(ctx)
+    current_page, leaderboard_message = await get_leaderboard(ctx)
 
     @bot.event
     async def on_reaction_add(reaction, user):
