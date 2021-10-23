@@ -12,5 +12,3 @@ async def get_leaderboard(ctx):
         await message.add_reaction("⬅")
         await message.add_reaction("➡")
     return current_page, message
-
-

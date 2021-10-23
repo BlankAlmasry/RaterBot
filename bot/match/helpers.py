@@ -5,3 +5,4 @@ async def fetch_first_and_second_team(message):
     first_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_1))
     second_team_players = tuple(map(lambda player: player.name + "#" + player.discriminator, team_2))
     return first_team_players, second_team_players
+

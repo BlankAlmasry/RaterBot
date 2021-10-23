@@ -32,7 +32,7 @@ async def match(ctx):
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
-        await start_match_voting(
+        await add_vote(
             voting_pool, first_team_players, second_team_players,
             ctx, reaction, user)
 

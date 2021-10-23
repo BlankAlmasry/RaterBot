@@ -8,8 +8,8 @@ async def start_match(ctx):
     return voting_pool, first_team_players, second_team_players
 
 
-async def start_match_voting(message, first_team_players, second_team_players,
-                             ctx, reaction, user):
+async def add_vote(message, first_team_players, second_team_players,
+                   ctx, reaction, user):
     await match_voting_pool_handler(message, first_team_players, second_team_players,
                                     ctx, reaction, user)
 
@@ -18,3 +18,4 @@ async def execute_result(ctx, voting_pool, losers, winners):
     await voting_pool.delete()
     msg = await match_factory(winners, losers, ctx.guild.id, ctx.guild.members)
     await ctx.send(msg)
+
