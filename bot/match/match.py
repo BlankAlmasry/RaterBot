@@ -10,7 +10,7 @@ async def make_match(ctx):
     if error_msg:
         await ctx.send(error_msg)
         raise ValueError
-    voting_pool = await vote.start_voting(ctx)
+    voting_pool = await vote.start_voting_pool(ctx)
     first_team_players, second_team_players = await fetch_first_and_second_team(ctx.message)
     return voting_pool, first_team_players, second_team_players
 
