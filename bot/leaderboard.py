@@ -15,7 +15,7 @@ async def get_rankings(ctx):
     return page, message
 
 
-async def paginate_rankings(ctx, reaction, message, page):
+async def paginate_leaderboard(ctx, reaction, message, page):
     if str(reaction.emoji) == "⬅":
         await message.edit(content=await get_leaderboard(ctx.guild.id, ctx.message.author, page - 1))
     if str(reaction.emoji) == "➡":
