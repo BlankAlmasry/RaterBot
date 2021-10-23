@@ -25,7 +25,7 @@ async def on_guild_remove(guild):
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
     try:
-        message, first_team_players, second_team_players = await make_match(ctx)
+        voting_pool, first_team_players, second_team_players = await make_match(ctx)
     except ValueError:  # command validation failed
         return
 
@@ -34,7 +34,7 @@ async def match(ctx):
         if user == bot.user:
             return
         await match_voting_pool_handler(
-            message, first_team_players, second_team_players,
+            voting_pool, first_team_players, second_team_players,
             ctx, reaction, user)
 
 
