@@ -1,4 +1,5 @@
-from bot.leaderboard.leaderboard import try_paginate_leaderboard, get_leaderboard
+from bot.leaderboard.leaderboard import get_leaderboard
+from bot.leaderboard.paginate_leaderboard import try_paginate_leaderboard
 from bot.raterapi_requests import *
 from bot.responses import *
 from bot.stats import *

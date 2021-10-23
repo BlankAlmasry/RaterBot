@@ -14,10 +14,3 @@ async def get_leaderboard(ctx):
     return current_page, message
 
 
-async def try_paginate_leaderboard(ctx, reaction, message, page):
-    if str(reaction.emoji) == "⬅":
-        await message.edit(content=await leaderboard_factory(ctx.guild.id, ctx.message.author, page - 1))
-    if str(reaction.emoji) == "➡":
-        await message.edit(content=await leaderboard_factory(ctx.guild.id, ctx.message.author, page + 1))
-
-
