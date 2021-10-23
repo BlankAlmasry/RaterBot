@@ -1,12 +1,10 @@
-from bot.match.match import *
-from bot.match.match_voting_handler import match_voting_pool_handler
 from bot.rankings import paginate_rankings, get_rankings
 from bot.raterapi_requests import *
 from bot.responses import *
 from bot.helpers import *
 from bot.stats import *
 from bot.vote import *
-
+from bot.match.match_facade import *
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix=commands.when_mentioned, intents=intents)
@@ -26,7 +24,7 @@ async def on_guild_remove(guild):
 @commands.cooldown(1, 1, commands.BucketType.guild)
 async def match(ctx):
     try:
-        voting_pool, first_team_players, second_team_players = await make_match(ctx)
+        voting_pool, first_team_players, second_team_players = await start_match(ctx)
     except ValueError:  # command validation failed
         return
 
@@ -34,7 +32,7 @@ async def match(ctx):
     async def on_reaction_add(reaction, user):
         if user == bot.user:
             return
-        await match_voting_pool_handler(
+        await start_match_voting(
             voting_pool, first_team_players, second_team_players,
             ctx, reaction, user)
 
